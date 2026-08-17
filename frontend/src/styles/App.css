@@ -1,0 +1,368 @@
+/* src/styles/App.css*/
+:root {
+  --primary: #1976d2;
+  --primary-2: #42a5f5;
+  --accent: #2e7d32;
+  --bg: #f4f6f8;
+  --text: #0f172a;
+  --muted: #64748b;
+  --surface: #ffffff;
+  --border: #e5e7eb;
+  --nav-h: 72px; /* altura del topbar fijo */
+}
+
+/* Reset suave (Tailwind ya hace mucho; mantenemos lo mínimo) */
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+}
+
+.app { min-height: 100vh; }
+
+/* =========================================
+   Contenedor fluido reutilizable
+========================================= */
+.container {
+  width: 100%;
+  max-width: 1200px;      /* ajusta 1100/1280 si lo prefieres */
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+@media (max-width: 768px) {
+  .container { padding-left: 12px; padding-right: 12px; }
+}
+
+/* =========================================
+   Topbar fijo (sitio público)
+========================================= */
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(255,255,255,.88);
+  backdrop-filter: saturate(1.2) blur(10px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(2, 6, 23, 0.06);
+}
+.topbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex; align-items: center; gap: 16px;
+  padding: 10px 16px;
+  height: var(--nav-h);
+}
+
+/* Marca/Logo */
+.brand { display: flex; align-items: center; gap: 10px; min-width: 260px; }
+.brand-title {
+  font-weight: 800; font-size: 14px; line-height: 1.1;
+  letter-spacing: .2px; color: #0b3c86;
+}
+.brand-sub { color: var(--muted); font-weight: 600; font-size: 11px; }
+.logo {
+  width: 36px; height: 36px; flex: 0 0 auto;
+  filter: drop-shadow(0 4px 8px rgba(25,118,210,.25));
+}
+
+/* Menú centrado */
+.menu {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; margin: 0 auto;
+  list-style: none; padding: 0;
+}
+.nav-item { position: relative; }
+
+/* Enlaces del menú */
+.link {
+  background: none; border: none; outline: none;
+  color: #0d47a1; font-weight: 600;
+  padding: 10px 14px; border-radius: 10px;
+  cursor: pointer;
+  transition: color .2s ease, background .2s ease, transform .2s ease;
+  position: relative;
+}
+.link:hover { background: #e3f2fd; }
+.link.active { background: var(--primary); color: #fff; }
+.link::after {
+  content: ""; position: absolute; left: 12px; right: 12px; bottom: 6px; height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--primary-2));
+  transform: scaleX(0); transform-origin: left; transition: transform .25s ease; border-radius: 2px;
+}
+.link:hover::after { transform: scaleX(1); }
+
+/* Dropdown del menú */
+.dropdown {
+  position: absolute; top: 100%; left: 0; min-width: 240px;
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 8px; margin-top: 10px;
+  box-shadow: 0 14px 35px rgba(2,6,23,.12);
+  opacity: 0; transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+}
+.nav-item:hover .dropdown,
+.nav-item:focus-within .dropdown {
+  opacity: 1; transform: translateY(0); pointer-events: auto;
+}
+
+.menu-btn {
+  width: 100%; text-align: left;
+  background: none; border: none; outline: none;
+  padding: 10px 12px; border-radius: 8px;
+  color: var(--text); font-weight: 500; cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.menu-btn:hover { background: #f1f5f9; }
+.menu-btn.active { background: var(--primary); color: #fff; }
+
+.right {
+  display: flex; align-items: center; gap: 10px; min-width: 180px; justify-content: flex-end;
+}
+.badge {
+  font-size: 12px; color: #0d47a1; background: #e3f2fd;
+  padding: 4px 8px; border-radius: 999px; border: 1px solid #bbdefb;
+}
+.cta {
+  border: 1px solid #cfe8ff; background: #fff; color: var(--primary);
+  padding: 8px 12px; border-radius: 10px; font-weight: 700; cursor: pointer;
+  transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.cta:hover { background: #eef6ff; box-shadow: 0 8px 20px rgba(25,118,210,.12); }
+.cta:active { transform: translateY(1px); }
+
+/* =========================================
+   Contenido principal
+========================================= */
+main {
+  max-width: 1200px;
+  margin: calc(var(--nav-h) + 20px) auto 24px;
+  padding: 0 16px;
+}
+
+/* Para que los anclajes no queden ocultos por el topbar */
+main > * { scroll-margin-top: calc(var(--nav-h) + 12px); }
+
+/* Animación utilitaria que podrías seguir usando */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   Responsive del topbar/menú
+========================================= */
+@media (max-width: 960px) {
+  .brand-title { display: none; }
+  .menu { gap: 4px; }
+  .link { padding: 8px 10px; }
+  .dropdown { min-width: 200px; }
+}
+@media (max-width: 640px) {
+  .menu { overflow-x: auto; scrollbar-width: thin; }
+  .menu::-webkit-scrollbar { height: 6px; }
+  .menu::-webkit-scrollbar-thumb { background: #d9e9ff; border-radius: 8px; }
+  .right { display: none; }
+}
+
+/* Mantener al final para evitar overrides accidentales */
+:root { --nav-h: 72px; }
+
+/* ============ FORM PANEL (acabado suave del contenedor) ============ */
+.form-panel {
+  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.98));
+  border-radius: 18px;
+  box-shadow:
+    0 10px 30px rgba(2, 6, 23, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.8) inset;
+}
+
+/* ============ INPUT SOFT (borde azul muy claro + radios grandes) ============ */
+.input-soft {
+  border-color: color-mix(in srgb, var(--primary-2) 18%, white);
+  background-color: #ffffff;
+}
+.input-soft:focus {
+  border-color: color-mix(in srgb, var(--primary-2) 28%, white);
+}
+.input-soft::placeholder {
+  color: color-mix(in srgb, var(--primary-2) 35%, white);
+  opacity: .9;
+}
+
+/* ============ Grid del formulario (asegura ancho completo) ============ */
+.form-grid {
+  width: 100%;
+  display: grid;
+  gap: 12px;
+}
+@media (min-width: 640px) {
+  .form-grid { gap: 16px; }
+}
+
+/* ============ LOGIN MODAL ============ */
+/* Overlay */
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000; /* por encima del topbar */
+  display: flex;
+  align-items: flex-start;  /* centrado ligeramente más abajo */
+  justify-content: center;
+  padding-top: 110px;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+}
+
+/* Contenedor relativo para ubicar la X flotante */
+.login-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  padding: 0 8px; /* respiración lateral en pantallas pequeñas */
+}
+
+/* Wrapper del Card */
+.login-card-shell { position: relative; }
+
+/* X flotante fuera del card */
+.login-close-float {
+  position: absolute;
+  top: -22px;           /* sale del card */
+  right: -22px;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: rgba(255,255,255,.9);
+  color: #0f172a;
+  box-shadow: 0 10px 28px rgba(2,6,23,.20);
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.login-close-float:hover { background: #ffffff; }
+
+/* Tarjeta del Login / formularios estilo login */
+.login-panel {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 20px;
+  padding: 28px 24px 28px;
+  box-shadow:
+    0 18px 40px rgba(2, 6, 23, 0.14),
+    0 2px 0 rgba(255, 255, 255, 0.75) inset;
+  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.98));
+  animation: fadeUp .22s ease-out;
+}
+
+/* Título del login / formularios */
+.login-title {
+  text-align: center;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 0 0 12px 0;
+  font-size: clamp(1.4rem, 2vw, 1.8rem);
+}
+
+/* Pila/espaciado de elementos */
+.login-stack { margin-top: 6px; }
+.login-field { margin-bottom: 12px; }
+
+/* Botón "ojo" para contraseña */
+.login-eye {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.login-eye:hover {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary-2) 35%, white);
+}
+
+/* Mensaje de error */
+.login-error {
+  color: #dc2626;
+  font-size: 0.95rem;
+  text-align: center;
+  margin: 4px 0 8px;
+}
+
+/* Botón compacto centrado */
+.login-btn-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+.login-btn-compact {
+  min-width: 150px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(2,6,23,.10);
+}
+
+/* Variante de panel para formularios en página (idéntico al login, ancho máximo) */
+.contact-panel {
+  width: 100%;
+  max-width: 640px; /* pon 420 si quieres exactamente el ancho del login modal */
+  margin-inline: auto; /* centrado */
+}
+
+/* Selector de código + número en una fila con buen responsive */
+.phone-row {
+  display: grid;
+  grid-template-columns: 190px 1fr; /* ajusta 170–220px a gusto */
+  gap: 10px;
+}
+@media (max-width: 520px) {
+  .phone-row { grid-template-columns: 1fr; }
+}
+
+/* Política de datos: checklist alineado y accesible */
+.policy-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: .95rem;
+  color: var(--text);
+}
+.policy-checkbox {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  accent-color: var(--primary); /* color de marca en navegadores modernos */
+}
+.policy-link {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+.policy-link:hover { text-decoration: underline; }
+
+/* Ajuste responsive fino */
+@media (max-width: 480px) {
+  .login-wrap { max-width: 92vw; }
+  .login-close-float { top: -18px; right: -18px; width: 38px; height: 38px; }
+}
+
+.crud-panel {
+  max-width: 760px;
+}

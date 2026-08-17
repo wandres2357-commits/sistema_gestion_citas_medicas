@@ -1,0 +1,36 @@
+.sd-backdrop {
+  position: fixed;
+  inset: 0;
+  background:
+    rgba(
+      0,
+      0,
+      0,
+      .45
+    );
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.sd-dialog {
+  width: 95%;
+  max-width: 1600px;
+  height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.sd-header {
+  display: flex;
+  justify-content:
+    space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.sd-content {
+  flex: 1;
+  overflow: auto;
+}

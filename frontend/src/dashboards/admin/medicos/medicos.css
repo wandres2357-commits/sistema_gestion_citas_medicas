@@ -1,0 +1,316 @@
+/* =====================================================
+   PAGINA MEDICOS
+===================================================== */
+
+.medico-page {
+  width: 100%;
+}
+
+.medico-card {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: var(--sgcm-card-padding, 24px);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* =====================================================
+   TITULOS
+===================================================== */
+
+.medico-title {
+  margin: 0 0 var(--sgcm-gap-lg, 24px);
+  text-align: center;
+  font-size: var(--sgcm-font-page-title, 2.8rem);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--primary);
+  box-sizing: border-box;
+}
+
+.medico-section-title {
+  margin: 0 0 var(--sgcm-gap-md, 16px);
+  font-size: var(--sgcm-font-title, 1.35rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--primary);
+  box-sizing: border-box;
+}
+
+/* =====================================================
+   LAYOUT PRINCIPAL
+===================================================== */
+
+.medico-layout {
+  width: 100%;
+  display: block;
+  box-sizing: border-box;
+}
+
+.medico-form-container {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* =====================================================
+   LAYOUT SUPERIOR
+   Datos Generales + Datos Personales + Foto/Firma
+===================================================== */
+
+.medico-top-layout { 
+  display: grid;
+  grid-template-columns:
+  minmax(0, 1fr)
+  220px;
+  gap: 20px;
+  align-items: start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.medico-top-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.medico-sidepanel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* =====================================================
+   SECCIONES
+===================================================== */
+
+.medico-section {
+  width: 100%;
+  max-width: 100%;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--sgcm-card-radius, 18px);
+  padding: var(--sgcm-card-padding, 20px);
+  margin: 0 0 var(--sgcm-gap-md, 20px);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* =====================================================
+   GRIDS
+===================================================== */
+
+.medico-grid-3 {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+  gap: var(--sgcm-gap-md, 14px);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.medico-grid-2 {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: var(--sgcm-gap-md, 14px);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.medico-grid-1 {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr);
+  gap: var(--sgcm-gap-md, 14px);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* =====================================================
+   CAMPOS
+===================================================== */
+
+.medico-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.medico-field label,
+.medico-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* =====================================================
+   SELECTS
+===================================================== */
+
+.medico-select {
+  width: 100%;
+  min-height: var(--sgcm-input-height, 48px);
+  box-sizing: border-box;
+  border: 1px solid #d6dde8;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0 12px;
+  font: inherit;
+  font-size: var(--sgcm-font-normal, 14px);
+  line-height: 1.4;
+  color: var(--c-fg);
+  outline: none;
+  cursor: pointer;
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease,
+    background-color .2s ease;
+}
+
+.medico-select:focus {
+  border-color: var(--primary);
+  box-shadow:
+    0 0 0 3px rgba(25, 118, 210, .12);
+}
+
+.medico-select:hover {
+  border-color: var(--primary);
+}
+
+/* =====================================================
+   FOTO MEDICO
+===================================================== */
+
+.medico-photo-box { 
+  min-height: 180px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center; color: #64748b;
+  font-weight: 600;
+  padding: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* =====================================================
+   FIRMA DIGITAL
+===================================================== */
+
+.medico-signature-box { 
+  min-height: 140px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #64748b;
+  font-weight: 600;
+  padding: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* =====================================================
+   INFORMACION PROFESIONAL
+===================================================== */
+
+.especialidad-toolbar {
+  display: grid;
+  grid-template-columns:
+    auto
+    250px
+    1fr
+    160px;
+  gap: 10px;
+  align-items: center;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.especialidad-search {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
+
+.especialidad-search input {
+  width: 100%;
+}
+
+.especialidad-search button {
+  flex: 0 0 auto;
+}
+
+.especialidad-selected {
+  width: 100%;
+}
+
+/* =====================================================
+   TABLA ESPECIALIDADES MEDICO
+===================================================== */
+
+.medico-especialidades-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.medico-especialidades-table th,
+.medico-especialidades-table td {
+  border: 1px solid #d6dde8;
+  padding: 8px;
+  font-size: 13px;
+}
+
+.medico-especialidades-table th {
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 700;
+}
+
+.medico-especialidades-table tr:hover {
+  background: rgba(25, 118, 210, .04);
+}
+
+.btn-delete {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  min-height: auto;
+  padding: 4px 8px;
+  box-shadow: none;
+}
+
+/* =====================================================
+   BOTONES
+===================================================== */
+
+.medico-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}

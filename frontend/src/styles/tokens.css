@@ -1,0 +1,40 @@
+:root {
+  /* ============================
+     SGCM - TOKENS VISUALES
+     Optimizado para Chrome al 100%
+     ============================ */
+
+  /* Tipografía */
+  --sgcm-font-small: 12px;
+  --sgcm-font-normal: 14px;
+  --sgcm-font-medium: 15px;
+  --sgcm-font-title: 18px;
+  --sgcm-font-page-title: 22px;
+
+  /* Alturas */
+  --sgcm-input-height: 38px;
+  --sgcm-button-height: 38px;
+  --sgcm-topbar-height: 64px;
+
+  /* Espaciados */
+  --sgcm-gap-xs: 6px;
+  --sgcm-gap-sm: 8px;
+  --sgcm-gap-md: 12px;
+  --sgcm-gap-lg: 16px;
+
+  /* Cards */
+  --sgcm-card-padding: 16px;
+  --sgcm-card-radius: 12px;
+
+  /* Layout */
+  --sgcm-sidebar-width: 220px;
+  --sgcm-admin-content-padding: 16px;
+
+  /* Tablas */
+  --sgcm-table-cell-padding: 8px;
+
+  /* Módulo médicos */
+  --sgcm-medico-sidepanel-width: 300px;
+  --sgcm-medico-photo-height: 300px;
+  --sgcm-medico-signature-height: 160px;
+}

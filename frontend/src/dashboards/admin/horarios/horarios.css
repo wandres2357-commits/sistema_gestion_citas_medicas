@@ -1,0 +1,1457 @@
+/* =====================================================
+   HORARIOS - SGCM|
+===================================================== */
+
+/* =====================================================
+   VARIABLES LOCALES
+===================================================== */
+.hm-page {
+  --hm-border: #cbd5e1;
+  --hm-border-light: #e2e8f0;
+  --hm-bg: #ffffff;
+  --hm-bg-soft: #f8fafc;
+  --hm-bg-header: #f1f5f9;
+  --hm-text: #334155;
+  --hm-text-soft: #64748b;
+  --hm-primary: var(--primary, #1976d2);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  color: var(--hm-text);
+}
+/* =====================================================
+   BOX SIZING
+===================================================== */
+.hm-page *,
+.hm-page *::before,
+.hm-page *::after {
+  box-sizing: border-box;
+}
+/* =====================================================
+   TARJETA PRINCIPAL
+===================================================== */
+.hm-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 20px;
+  box-sizing: border-box;
+}
+/* =====================================================
+   TÍTULO PRINCIPAL
+===================================================== */
+.hm-window-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 68px;
+  padding: 12px 20px;
+  border: 1px solid var(--hm-border);
+  background: var(--hm-bg);
+  color: var(--hm-primary);
+  text-align: center;
+}
+.hm-window-title h1,
+.hm-window-title .medico-title {
+  margin: 0;
+  max-width: 100%;
+  font-size: clamp(1.15rem, 1.4vw, 1.55rem);
+  line-height: 1.3;
+  font-weight: 800;
+  color: var(--hm-primary);
+  white-space: normal;
+}
+/* =====================================================
+   MENSAJE DE ERROR
+===================================================== */
+.hm-error {
+  width: 100%;
+  max-width: 100%;
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid #ef4444;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+}
+/* =====================================================
+   CREADOR PRINCIPAL
+===================================================== */
+/*
+   Distribución:
+   
+   ┌──────────────┬────────────┬──────────────┐
+   │ Calendarios  │   Horas    │    Turnos    │
+   └──────────────┴────────────┴──────────────┘
+
+   Se utilizan minmax(0, 1fr) para que las
+   columnas puedan reducirse naturalmente.
+*/
+.hm-creator {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.30fr)
+    minmax(280px, 0.90fr)
+    minmax(330px, 1.05fr);
+  gap: 18px;
+  width: 100%;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--hm-border);
+  background: #ffffff;
+  align-items: start;
+}
+/* =====================================================
+   CALENDARIOS
+===================================================== */
+.hm-calendars {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+/* =====================================================
+   CALENDARIO
+===================================================== */
+.hm-calendar {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--hm-border-light);
+  background: #ffffff;
+  overflow: hidden;
+}
+/* =====================================================
+   CABECERA CALENDARIO
+===================================================== */
+.hm-calendar-header {
+  display: grid;
+  grid-template-columns:
+    34px
+    minmax(0, 1fr)
+    34px;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  background: var(--hm-bg-header);
+}
+.hm-calendar-title {
+  min-width: 0;
+  padding: 0 4px;
+  text-align: center;
+  color: var(--hm-text);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: lowercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* =====================================================
+   NAVEGACIÓN CALENDARIO
+===================================================== */
+.hm-calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #1e293b;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: none;
+}
+.hm-calendar-nav:hover {
+  background: #e2e8f0;
+}
+/* =====================================================
+   DÍAS SEMANA
+===================================================== */
+.hm-calendar-weekdays,
+.hm-calendar-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(7, minmax(0, 1fr));
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  column-gap: 2px;
+  row-gap: 2px;
+}
+.hm-calendar-weekdays {
+  margin-bottom: 3px;
+}
+.hm-calendar-weekdays span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  height: 26px;
+  color: var(--hm-text-soft);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* =====================================================
+   DÍAS
+===================================================== */
+.hm-calendar-day,
+.hm-calendar-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  box-shadow: none;
+}
+.hm-calendar-day {
+  cursor: pointer;
+}
+.hm-calendar-day:hover {
+  background: #f1f5f9;
+}
+/* =====================================================
+   FINES DE SEMANA
+===================================================== */
+.hm-calendar-day--weekend {
+  color: #ef4444;
+}
+/* =====================================================
+   RANGO
+===================================================== */
+.hm-calendar-day--range {
+  background: #dbeafe;
+  color: #1e3a8a;
+  font-weight: 600;
+}
+/* =====================================================
+   FECHA SELECCIONADA
+===================================================== */
+.hm-calendar-day--selected {
+  background: var(--hm-primary);
+  color: #ffffff;
+  font-weight: 800;
+}
+/* =====================================================
+   BOTÓN HOY
+===================================================== */
+.hm-calendar-footer {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-top: 8px;
+}
+.hm-today-btn {
+  min-width: 110px;
+  min-height: 42px;
+  padding: 8px 20px;
+  border: 1px solid var(--hm-border);
+  border-radius: 10px;
+  background: var(--hm-bg-soft);
+  color: var(--hm-text);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.hm-today-btn:hover {
+  background: #eef2f7;
+}
+/* =====================================================
+   PANEL DE HORAS
+===================================================== */
+.hm-time-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+/* =====================================================
+   MODALIDAD
+===================================================== */
+.hm-radio-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  width: 100%;
+  min-width: 0;
+  min-height: 56px;
+  padding: 10px 14px;
+  border: 1px solid var(--hm-border);
+  background: #ffffff;
+  color: var(--hm-text-soft);
+  font-size: 14px;
+  font-weight: 600;
+}
+.hm-radio-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.hm-radio-row input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+/* =====================================================
+   RESERVADO
+===================================================== */
+.hm-check-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+  min-height: 30px;
+  color: var(--hm-text-soft);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.hm-check-row input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+/* =====================================================
+   CAMPOS DE HORA
+===================================================== */
+.hm-time-field {
+  display: grid;
+  grid-template-columns:
+    105px
+    minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+.hm-time-field label {
+  min-width: 0;
+  color: var(--hm-text-soft);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.hm-time-field input,
+.hm-time-field select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+/* =====================================================
+   BOTONES HORAS
+===================================================== */
+.hm-time-panel > button {
+  width: 100%;
+  min-width: 0;
+  min-height: 54px;
+  margin: 0;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.hm-time-panel > button + button {
+  margin-top: 0;
+}
+/* =====================================================
+   PANEL TURNOS
+===================================================== */
+.hm-turnos-panel {
+  width: 100%;
+  min-width: 0;
+  min-height: 210px;
+  border: 1px solid var(--hm-border);
+  background: #ffffff;
+  overflow: hidden;
+}
+/* =====================================================
+   ACCIONES TURNOS
+===================================================== */
+.hm-turnos-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  border-bottom: 1px solid var(--hm-border-light);
+  background: #ffffff;
+}
+.hm-turnos-actions button {
+  min-width: 0;
+  min-height: 40px;
+  padding: 7px 12px;
+  border: 1px solid var(--hm-border);
+  border-radius: 10px;
+  background: var(--hm-bg-soft);
+  color: var(--hm-text);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.hm-turnos-actions button:hover {
+  border-color: var(--hm-primary);
+  background: #eef5ff;
+}
+/* =====================================================
+   TABLA DE PREVISUALIZACIÓN
+===================================================== */
+.hm-preview-table {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0;
+  border-collapse: collapse;
+  table-layout: fixed !important;
+  font-size: 13px;
+}
+/* =====================================================
+   CELDAS
+===================================================== */
+.hm-preview-table th,
+.hm-preview-table td {
+  width: auto;
+  min-width: 0;
+  padding: 9px 6px !important;
+  border: 1px solid #d6dde8 !important;
+  color: var(--hm-text);
+  font-size: 13px;
+  line-height: 1.25;
+  text-align: center;
+  vertical-align: middle;
+  white-space: normal !important;
+  overflow: hidden;
+
+  overflow-wrap: break-word;
+
+  word-break: normal;
+}
+
+.hm-preview-table th {
+  background: var(--hm-bg-soft) !important;
+
+  color: var(--hm-text);
+
+  font-weight: 800;
+
+  line-height: 1.2;
+}
+
+
+/* =====================================================
+   ANCHOS TABLA
+===================================================== */
+
+/*
+   Los porcentajes están equilibrados para evitar
+   que los encabezados se monten entre sí.
+*/
+
+.hm-preview-table th:nth-child(1),
+.hm-preview-table td:nth-child(1) {
+  width: 20% !important;
+}
+
+.hm-preview-table th:nth-child(2),
+.hm-preview-table td:nth-child(2) {
+  width: 21% !important;
+}
+
+.hm-preview-table th:nth-child(3),
+.hm-preview-table td:nth-child(3) {
+  width: 21% !important;
+}
+
+.hm-preview-table th:nth-child(4),
+.hm-preview-table td:nth-child(4) {
+  width: 17% !important;
+}
+
+.hm-preview-table th:nth-child(5),
+.hm-preview-table td:nth-child(5) {
+  width: 21% !important;
+}
+
+
+/* =====================================================
+   CELDA ACCIÓN
+===================================================== */
+
+.hm-preview-action-cell {
+  text-align: center;
+
+  white-space: nowrap !important;
+}
+
+
+/* =====================================================
+   BOTÓN ELIMINAR
+===================================================== */
+
+.hm-preview-delete-btn {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  min-width: 36px;
+
+  height: 32px;
+  min-height: 32px;
+
+  padding: 2px;
+
+  border: 1px solid var(--hm-border);
+
+  border-radius: 7px;
+
+  background: var(--hm-bg-soft);
+
+  font-size: 14px;
+
+  cursor: pointer;
+
+  box-shadow: none;
+}
+
+.hm-preview-delete-btn:hover {
+  background: #fee2e2;
+
+  border-color: #ef4444;
+}
+
+
+/* =====================================================
+   TABLA VACÍA
+===================================================== */
+
+.hm-preview-empty {
+  height: 48px;
+
+  text-align: center !important;
+
+  color: var(--hm-text-soft) !important;
+
+  font-size: 14px !important;
+}
+
+
+/* =====================================================
+   TABS
+===================================================== */
+
+.hm-tabs {
+  width: 100%;
+  min-width: 0;
+
+  margin-top: 18px;
+
+  border: 1px solid var(--hm-border);
+
+  background: #ffffff;
+}
+
+
+/* =====================================================
+   CABECERA TABS
+===================================================== */
+
+.hm-tab-header {
+  display: flex;
+
+  align-items: stretch;
+
+  width: 100%;
+  min-width: 0;
+
+  border-bottom: 1px solid var(--hm-border);
+}
+
+.hm-tab {
+  min-height: 42px;
+
+  padding: 9px 18px;
+
+  border: 1px solid var(--hm-border);
+  border-bottom: none;
+
+  background: var(--hm-bg-soft);
+
+  color: var(--hm-text);
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  box-shadow: none;
+}
+
+.hm-tab.active {
+  background: #ffffff;
+
+  color: var(--hm-primary);
+
+  font-weight: 800;
+
+  border-top: 2px solid var(--hm-primary);
+}
+
+
+/* =====================================================
+   CUERPO TABS
+===================================================== */
+
+.hm-tab-body {
+  width: 100%;
+  min-width: 0;
+
+  padding: 16px;
+}
+
+
+/* =====================================================
+   CAMPOS RECURSOS
+===================================================== */
+
+.hm-resource-fields {
+  display: grid;
+
+  grid-template-columns:
+    125px
+    minmax(100px, 150px)
+    44px
+    minmax(0, 1fr);
+
+  gap: 9px;
+
+  align-items: center;
+
+  width: 100%;
+  min-width: 0;
+
+  margin-bottom: 14px;
+}
+
+.hm-resource-fields label,
+.hm-consultorio-row label {
+  min-width: 0;
+
+  color: var(--hm-text-soft);
+
+  font-size: 13px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+
+/* =====================================================
+   INPUTS
+===================================================== */
+
+.hm-resource-fields input,
+.hm-resource-fields select,
+.hm-consultorio-row select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+
+  min-height: 44px;
+
+  padding: 0 11px;
+
+  border: 1px solid #d6dde8;
+
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  color: var(--hm-text);
+
+  font-size: 14px;
+
+  outline: none;
+}
+
+.hm-resource-fields input:focus,
+.hm-resource-fields select:focus,
+.hm-consultorio-row select:focus {
+  border-color: var(--hm-primary);
+
+  box-shadow:
+    0 0 0 2px rgba(25, 118, 210, 0.08);
+}
+
+.hm-resource-fields input[readonly] {
+  background: #f8fafc;
+}
+
+
+/* =====================================================
+   BOTÓN BUSCAR
+===================================================== */
+
+.hm-search-button {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 44px;
+  min-width: 44px;
+
+  height: 44px;
+  min-height: 44px;
+
+  padding: 0;
+
+  border: 1px solid #d6dde8;
+
+  border-radius: 10px;
+
+  background: #f8fafc;
+
+  font-size: 17px;
+
+  cursor: pointer;
+
+  box-shadow: none;
+}
+
+.hm-search-button:hover {
+  border-color: var(--hm-primary);
+
+  background: #eef5ff;
+}
+
+
+/* =====================================================
+   BOTÓN BUSCAR MÉDICO
+===================================================== */
+
+.hm-search-action-button {
+  min-height: 40px;
+
+  padding: 7px 13px;
+
+  border: 1px solid var(--hm-border);
+
+  border-radius: 9px;
+
+  background: var(--hm-bg-soft);
+
+  color: var(--hm-text);
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+}
+/* =====================================================
+   CONSULTORIO / PISO
+===================================================== */
+
+.hm-consultorio-row {
+  display: grid;
+  grid-template-columns:
+    125px
+    minmax(0, 1fr)
+    220px;
+  gap: 9px;
+  align-items: end;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 14px;
+}
+
+.hm-consultorio-label {
+  display: flex;
+  align-items: center;
+  min-height: var(--sgcm-input-height, 48px);
+}
+
+.hm-consultorio-field {
+  width: 100%;
+  min-width: 0;
+}
+
+.hm-piso-field {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 1200px) {
+  .hm-consultorio-row {
+    grid-template-columns:
+      120px
+      minmax(0, 1fr)
+      180px;
+  }
+}
+
+@media (max-width: 900px) {
+  .hm-consultorio-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .hm-consultorio-label {
+    min-height: auto;
+  }
+}
+/* =====================================================
+   PANEL RECURSOS
+===================================================== */
+
+.hm-resource-panel {
+  width: 100%;
+  min-width: 0;
+
+  margin-top: 12px;
+
+  border: 1px solid var(--hm-border);
+
+  background: #ffffff;
+
+  overflow: hidden;
+}
+
+
+/* =====================================================
+   TÍTULO RECURSOS
+===================================================== */
+
+.hm-resource-title {
+  display: flex;
+
+  align-items: center;
+
+  min-height: 42px;
+
+  padding: 9px 14px;
+
+  border-bottom: 1px solid var(--hm-border);
+
+  background: var(--hm-bg-soft);
+
+  color: var(--hm-text);
+
+  font-size: 14px;
+  font-weight: 800;
+}
+
+
+/* =====================================================
+   ACCIONES RECURSOS
+===================================================== */
+
+.hm-resource-actions {
+  display: flex;
+
+  justify-content: flex-end;
+  align-items: center;
+
+  flex-wrap: wrap;
+
+  gap: 8px;
+
+  padding: 10px;
+
+  border-bottom: 1px solid var(--hm-border-light);
+}
+
+.hm-resource-actions button {
+  min-width: 0;
+
+  min-height: 40px;
+
+  padding: 7px 12px;
+
+  border: 1px solid var(--hm-border);
+
+  border-radius: 9px;
+
+  background: var(--hm-bg-soft);
+
+  color: var(--hm-text);
+
+  font-size: 13px;
+  font-weight: 700;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+}
+
+.hm-resource-actions button:hover {
+  border-color: var(--hm-primary);
+
+  background: #eef5ff;
+}
+
+
+/* =====================================================
+   DATAGRID
+===================================================== */
+
+.hm-resource-panel .data-grid,
+.hm-tabs .data-grid {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  overflow-x: auto;
+}
+
+
+/* =====================================================
+   TOOLBAR INFERIOR
+===================================================== */
+
+.hm-toolbar {
+  display: flex;
+
+  justify-content: flex-end;
+  align-items: center;
+
+  flex-wrap: wrap;
+
+  gap: 10px;
+
+  width: 100%;
+
+  margin-top: 18px;
+
+  padding-top: 14px;
+
+  border-top: 1px solid var(--hm-border);
+}
+
+.hm-toolbar button {
+  min-width: 120px;
+
+  min-height: 42px;
+
+  padding: 8px 14px;
+
+  border: 1px solid var(--hm-border);
+
+  border-radius: 9px;
+
+  background: var(--hm-bg-soft);
+
+  color: var(--hm-text);
+
+  font-size: 13px;
+  font-weight: 800;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+}
+
+.hm-toolbar button:hover {
+  border-color: var(--hm-primary);
+
+  background: #eef5ff;
+}
+
+
+/* =====================================================
+   DATAGRID - PREVENIR DESBORDAMIENTO
+===================================================== */
+
+.hm-resource-panel .data-grid,
+.hm-tabs .data-grid {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+
+/* =====================================================
+   1400 PX
+===================================================== */
+
+@media (max-width: 1400px) {
+
+  .hm-card {
+    padding: 18px;
+  }
+
+  .hm-creator {
+    grid-template-columns:
+      minmax(0, 1.25fr)
+      minmax(270px, 0.90fr)
+      minmax(320px, 1fr);
+
+    gap: 15px;
+
+    padding: 15px;
+  }
+
+  .hm-calendars {
+    gap: 12px;
+  }
+
+  .hm-resource-fields {
+    grid-template-columns:
+      115px
+      minmax(90px, 140px)
+      42px
+      minmax(0, 1fr);
+  }
+
+  .hm-search-button {
+    width: 42px;
+    min-width: 42px;
+  }
+}
+
+
+/* =====================================================
+   NOTEBOOK / 1200 PX
+===================================================== */
+
+@media (max-width: 1200px) {
+
+  .hm-creator {
+    grid-template-columns: 1fr;
+
+    gap: 16px;
+  }
+
+  .hm-calendars {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    width: 100%;
+
+    max-width: 760px;
+
+    margin: 0 auto;
+  }
+
+  .hm-time-panel {
+    width: 100%;
+
+    max-width: 620px;
+
+    margin: 0 auto;
+  }
+
+  .hm-turnos-panel {
+    width: 100%;
+  }
+
+  .hm-resource-fields {
+    grid-template-columns:
+      120px
+      minmax(100px, 160px)
+      44px
+      minmax(0, 1fr);
+  }
+  .hm-consultorio-row {
+    grid-template-columns:
+      120px
+      minmax(0, 1fr)
+      180px;
+  }
+}
+
+
+/* =====================================================
+   TABLET / 900 PX
+===================================================== */
+
+@media (max-width: 900px) {
+
+  .hm-card {
+    padding: 14px;
+  }
+
+  .hm-window-title {
+    min-height: 60px;
+
+    padding: 10px 14px;
+  }
+
+  .hm-window-title h1,
+  .hm-window-title .medico-title {
+    font-size: 1.2rem;
+  }
+
+  .hm-creator {
+    padding: 12px;
+  }
+
+  .hm-calendars {
+    grid-template-columns: 1fr;
+
+    max-width: 420px;
+  }
+
+  .hm-resource-fields {
+    grid-template-columns: 1fr;
+
+    gap: 7px;
+  }
+
+  .hm-resource-fields label {
+    margin-top: 4px;
+  }
+
+  .hm-search-button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .hm-consultorio-row {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .hm-consultorio-row span {
+    padding-left: 0;
+  }
+
+
+
+  .hm-resource-actions {
+    justify-content: stretch;
+  }
+
+  .hm-resource-actions button {
+    flex: 1 1 180px;
+  }
+
+  .hm-turnos-actions {
+    justify-content: stretch;
+  }
+
+  .hm-turnos-actions button {
+    flex: 1 1 180px;
+  }
+
+  .hm-toolbar {
+    justify-content: stretch;
+  }
+
+  .hm-toolbar button {
+    flex: 1 1 180px;
+  }
+}
+
+
+/* =====================================================
+   CELULAR / 600 PX
+===================================================== */
+
+@media (max-width: 600px) {
+
+  .hm-card {
+    padding: 10px;
+  }
+
+  .hm-window-title {
+    min-height: 54px;
+
+    padding: 9px 10px;
+  }
+
+  .hm-window-title h1,
+  .hm-window-title .medico-title {
+    font-size: 1.05rem;
+  }
+
+  .hm-creator {
+    padding: 10px;
+
+    gap: 12px;
+  }
+
+  .hm-calendars {
+    gap: 10px;
+  }
+
+  .hm-calendar {
+    padding: 8px;
+  }
+
+  .hm-calendar-title {
+    font-size: 14px;
+  }
+
+  .hm-calendar-weekdays span {
+    font-size: 11px;
+  }
+
+  .hm-calendar-day,
+  .hm-calendar-empty {
+    height: 32px;
+    min-height: 32px;
+
+    font-size: 13px;
+  }
+
+  .hm-radio-row {
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 8px;
+  }
+
+  .hm-check-row {
+    justify-content: flex-start;
+  }
+
+  .hm-time-field {
+    grid-template-columns: 1fr;
+
+    gap: 5px;
+  }
+
+  .hm-time-field label {
+    white-space: normal;
+  }
+
+  .hm-tab-header {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hm-tab {
+    width: 100%;
+
+    padding: 8px 10px;
+  }
+
+  .hm-tab-body {
+    padding: 10px;
+  }
+
+  .hm-preview-table {
+    min-width: 560px !important;
+  }
+
+  .hm-turnos-panel {
+    overflow-x: auto;
+  }
+
+  .hm-resource-actions,
+  .hm-turnos-actions {
+    flex-direction: column;
+  }
+
+  .hm-resource-actions button,
+  .hm-turnos-actions button {
+    width: 100%;
+
+    flex: none;
+  }
+
+  .hm-toolbar {
+    flex-direction: column;
+  }
+
+  .hm-toolbar button {
+    width: 100%;
+
+    flex: none;
+  }
+}
+
+
+/* =====================================================
+   CONTROLES
+===================================================== */
+
+.hm-page button,
+.hm-page input,
+.hm-page select,
+.hm-page textarea {
+  font: inherit;
+}
+
+.hm-page button {
+  max-width: 100%;
+}
+
+.hm-page input,
+.hm-page select,
+.hm-page textarea {
+  max-width: 100%;
+}
+
+
+/* =====================================================
+   PREVENIR DESBORDAMIENTO
+===================================================== */
+
+.hm-page h1,
+.hm-page h2,
+.hm-page h3,
+.hm-page label,
+.hm-page span {
+  max-width: 100%;
+}
+
+
+/* =====================================================
+   ELEMENTOS QUE NO DEBEN PARTIRSE
+===================================================== */
+
+.hm-calendar-title,
+.hm-calendar-nav,
+.hm-preview-action-cell,
+.hm-toolbar button,
+.hm-resource-actions button,
+.hm-turnos-actions button {
+  overflow-wrap: normal;
+}
+
+
+/* =====================================================
+   ACCESIBILIDAD
+===================================================== */
+
+.hm-page button:focus-visible,
+.hm-page input:focus-visible,
+.hm-page select:focus-visible,
+.hm-page textarea:focus-visible {
+  outline: 2px solid var(--hm-primary);
+
+  outline-offset: 2px;
+}
+/* =====================================================
+   RECURSOS MIGRADOS A COMPONENTES SGCM
+===================================================== */
+
+.hm-resource-section {
+  margin: 0;
+}
+
+.hm-resource-sgcm-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: var(--sgcm-gap-md, 14px);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 14px;
+}
+
+.hm-resource-wide {
+  grid-column: 1 / -1;
+}
+
+.hm-resource-sgcm-grid .sgcm-search-row {
+  grid-template-columns:
+    minmax(0, 1fr)
+    64px;
+}
+
+.hm-resource-sgcm-grid .sgcm-field {
+  min-width: 0;
+}
+
+.hm-resource-sgcm-grid input,
+.hm-resource-sgcm-grid select {
+  width: 100%;
+}
+
+.hm-resource-panel {
+  width: 100%;
+  min-width: 0;
+  margin-top: 12px;
+  border: 1px solid var(--hm-border);
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.hm-resource-title {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--hm-border);
+  background: var(--hm-bg-soft);
+  color: var(--hm-text);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.hm-resource-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  border-bottom: 1px solid var(--hm-border-light);
+}
+
+@media (max-width: 900px) {
+  .hm-resource-sgcm-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hm-resource-wide {
+    grid-column: auto;
+  }
+
+  .hm-resource-actions {
+    justify-content: stretch;
+  }
+
+  .hm-resource-actions button {
+    flex: 1 1 180px;
+  }
+}

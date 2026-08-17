@@ -1,0 +1,29 @@
+.dg-footer {
+  display: flex;
+  justify-content:
+    space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 15px;
+}
+.dg-left {
+  font-size: 14px;
+}
+.dg-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dg-page-size {
+  padding: 6px 10px;
+  border:
+    1px solid #d8d8d8;
+  border-radius: 8px;
+  background: white;
+}
+.dg-pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

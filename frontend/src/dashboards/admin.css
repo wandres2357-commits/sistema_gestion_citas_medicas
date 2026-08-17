@@ -1,0 +1,311 @@
+/* ============================================================
+SGCM - ADMIN PANEL
+Hereda App.css
+============================================================ */
+
+/* ============================================================
+   LAYOUT
+============================================================ */
+
+.admin-layout {
+  display: flex;
+  min-height: calc(100vh - var(--nav-h));
+}
+
+.admin-sidebar {
+  width: var(--sgcm-sidebar-width);
+  min-width: var(--sgcm-sidebar-width);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 16px;
+  box-sizing: border-box;
+  position: sticky;
+  top: var(--nav-h);
+  height: calc(100vh - var(--nav-h));
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-shrink: 0;
+}
+
+.admin-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ============================================================
+   MENU
+============================================================ */
+
+.admin-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-title {
+  font-size: var(--sgcm-font-title);
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--primary);
+  margin: 0 0 var(--sgcm-gap-md);
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.admin-menu-item {
+  width: 100%;
+  min-height: var(--sgcm-button-height);
+  display: flex;
+  align-items: center;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: var(--sgcm-card-radius);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--sgcm-font-normal);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--c-fg);
+  box-sizing: border-box;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.admin-menu-item:hover {
+  background: var(--surface-hover, rgba(0, 0, 0, 0.05));
+}
+
+.admin-menu-item:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.admin-menu-item:active {
+  transform: scale(0.98);
+}
+
+
+.admin-menu-item:hover {
+  background: #eef5ff;
+}
+
+.admin-menu-item--active {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ============================================================
+   CRUD
+============================================================ */
+
+.admin-crud-title {
+  color: var(--primary);
+  margin-bottom: 16px;
+  font-weight: 800;
+}
+
+.admin-crud-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-crud-button {
+  width: fit-content;
+}
+
+.admin-crud-separator {
+  margin: 20px 0;
+}
+
+/* ============================================================
+   TABLAS
+============================================================ */
+
+.admin-table-wrapper {
+  overflow-x: auto;
+}
+.contact-panel {
+  width: 100%;
+  max-width: 100%;
+  }
+
+.admin-crud-table,
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+
+.admin-crud-table th,
+.admin-table th {
+  padding: var(--sgcm-table-cell-padding);
+  text-align: left;
+  font-size: var(--sgcm-font-normal);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.admin-crud-table td,
+.admin-table td {
+  padding: var(--sgcm-table-cell-padding);
+  font-size: var(--sgcm-font-normal);
+  line-height: 1.4;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.admin-crud-table tr:hover,
+.admin-table tr:hover {
+  background: rgba(25,118,210,.04);
+}
+
+/* ============================================================
+   BADGES
+============================================================ */
+
+.admin-status {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 4px 10px;
+
+  border-radius: 999px;
+
+  font-size: .85rem;
+  font-weight: 600;
+}
+
+.admin-status.active {
+  background: rgba(46,125,50,.12);
+  color: var(--accent);
+}
+
+.admin-status.inactive {
+  background: rgba(239,68,68,.12);
+  color: #dc2626;
+}
+
+/* ============================================================
+   UTILIDADES
+============================================================ */
+
+.admin-center {
+  text-align: center;
+}
+
+.admin-flex {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.mt-2 {
+  margin-top: 12px;
+}
+
+.mt-3 {
+  margin-top: 16px;
+}
+
+.mt-4 {
+  margin-top: 22px;
+}
+
+/* ============================================================
+   ANIMACIONES
+============================================================ */
+
+.fade-in {
+  animation: fadeIn .25s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+
+@media (max-width: 900px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    min-width: 100%;
+
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+
+    position: relative;
+    top: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-actions {
+    flex-direction: column;
+  }
+}
+/* ============================================================
+   TOPBAR COMPACTA SGCM
+============================================================ */
+
+.topbar {
+  min-height: var(--sgcm-topbar-height);
+  box-sizing: border-box;
+}
+
+.topbar-inner {
+  min-height: var(--sgcm-topbar-height);
+
+  padding: 8px 16px;
+
+  display: flex;
+  align-items: center;
+
+  box-sizing: border-box;
+}
+
+.brand-title {
+  font-size: var(--sgcm-font-medium);
+  font-weight: 700;
+  line-height: 1.2;
+
+  margin: 0;
+}
+
+.brand-sub {
+  font-size: var(--sgcm-font-small);
+  line-height: 1.2;
+
+  margin: 0;
+}

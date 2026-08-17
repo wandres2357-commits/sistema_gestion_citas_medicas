@@ -1,0 +1,124 @@
+/* src/footer-sitemap-single.css */
+:root{
+  --primary: #1976d2;
+  --primary-2: #42a5f5;
+  --accent: #2e7d32;
+  --bg: #f4f6f8;
+  --text: #0f172a;
+  --muted: #64748b;
+  --surface: #ffffff;
+  --border: #e5e7eb;
+}
+
+/* Base del footer */
+.fs1-footer{
+  background: #0f3e68; /* azul profundo consistente con tu footer */
+  color: #e9f2fb;
+  margin-top: 32px;
+  box-shadow: 0 -8px 24px rgba(2,6,23,.08);
+}
+.fs1-inner{
+  max-width: 900px; /* más angosto para "lista única" y mejor centralizado */
+  margin: 0 auto;
+  padding: 24px 16px 28px;
+}
+
+/* Cabecera */
+.fs1-header{
+  border-bottom: 1px solid rgba(255,255,255,.16);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+}
+.fs1-brand{ display: flex; align-items: center; gap: 10px; }
+.fs1-logo{ width: 26px; height: 26px; flex: 0 0 auto; }
+.fs1-title{ font-weight: 800; letter-spacing: .2px; }
+.fs1-sub{ font-size: 12px; color: #cfe2f8; }
+
+/* Lista única */
+.fs1-list-wrap{ margin-top: 8px; }
+.fs1-list{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+/* Grupo */
+.fs1-group{
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 14px;
+  padding: 8px;
+  box-shadow: 0 4px 14px rgba(2,6,23,.08);
+}
+
+/* Título de grupo */
+.fs1-group-title{
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: #ffffff;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background .2s ease, color .2s ease;
+}
+.fs1-group-title:hover{ background: rgba(255,255,255,.08); }
+.fs1-arrow{ font-size: 14px; opacity: .9; transform: translateY(1px); }
+.fs1-group-title.is-open .fs1-arrow{ transform: rotate(180deg); }
+
+/* Sublista */
+.fs1-sublist{
+  list-style: none;
+  padding: 8px 6px 8px 10px;
+  margin: 4px 0 0 0;
+
+  /* Desktop: siempre abierto */
+  max-height: 999px;
+  overflow: hidden;
+  transition: max-height .25s ease;
+}
+
+/* Item y link */
+.fs1-item{ margin: 0; }
+.fs1-link{
+  width: 100%;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #e9f2fb;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 10px;
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer;
+  transition: background .15s ease, transform .1s ease, border-color .15s ease;
+}
+.fs1-link:hover{
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.12);
+}
+.fs1-bullet{
+  color: #b3e5fc;
+  font-size: 18px;
+  line-height: 0;
+}
+
+/* Línea inferior */
+.fs1-bottom{
+  margin-top: 16px;
+  border-top: 1px solid rgba(255,255,255,.12);
+  padding-top: 10px;
+  color: #cfe2f8;
+  text-align: center;
+  font-size: 12px;
+}
+
+/* Móvil: comportamiento tipo acordeón */
+@media (max-width: 720px){
+  .fs1-sublist{ max-height: 0; }
+  .fs1-sublist.is-open{ max-height: 640px; }
+}
