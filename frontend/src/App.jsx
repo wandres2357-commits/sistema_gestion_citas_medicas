@@ -1,18 +1,13 @@
 //src/App.jsx
 import { useState, useEffect } from "react";
-import Login from "@/pages/Login";
-
-import AdminShell from "@/dashboards/AdminShell";
-import FooterSitemapSingle from "@/components/FooterSitemapSingle";
-import "@/styles/App.css";
-
-// UI (para vistas "inicio" y "pqr")
-  import Card from "@/components/ui/Card";
-  import Logo from "@/components/ui/Logo";
-
-// Formularios
-import ContactForm from "@/components/ui/ContactForm";
-import PQRForm from "@/components/ui/PQRForm";
+import Login from "./pages/Login";
+import AdminShell from "./dashboards/AdminShell";
+import FooterSitemapSingle from "./components/FooterSitemapSingle";
+import "./styles/App.css";
+import Card from "./components/ui/Card";
+import Logo from "./components/ui/Logo";
+import ContactForm from "./components/ui/ContactForm";
+import PQRForm from "./components/ui/PQRForm";
 
 export default function App() {
   const [view, setView] = useState("inicio");

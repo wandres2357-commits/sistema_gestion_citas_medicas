@@ -6,6 +6,7 @@ import pool from "./config/db.js";
 import especialidadesRoutes from "./modules/especialidades/especialidades.routes.js";
 import medicosRoutes from "./modules/medicos/medicos.routes.js";
 
+
 const app = express();
 
 app.use(

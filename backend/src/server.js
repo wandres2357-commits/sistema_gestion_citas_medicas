@@ -9,6 +9,7 @@ import consultoriosRoutes from "./modules/consultorios/consultorios.routes.js";
 import tiposDocumentoRoutes from "./modules/tipos-documento/tiposDocumento.routes.js";
 import areasRoutes from "./modules/areas/areas.routes.js";
 import horariosRoutes from "./modules/horarios/horarios.routes.js";
+import citasRoutes from "./modules/citas/citas.routes.js";
 
 const app = express();
 
@@ -53,6 +54,11 @@ app.use(
 app.use(
   "/api/horarios",
   horariosRoutes
+);
+
+app.use(
+  "/api/citas", 
+  citasRoutes
 );
 
 app.get("/api/test", async (req, res) => {
