@@ -66,9 +66,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
   font-size: var(--sgcm-font-normal);
   overflow-x: hidden;
-  /* Evita scroll lateral accidental en móvil */
-  overflow-x: hidden;
-  font-size: var(--sgcm-font-normal);
 }
 
 img, video, iframe, canvas { max-width: 100%; height: auto; display: block; }

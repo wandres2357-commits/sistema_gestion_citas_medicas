@@ -205,164 +205,243 @@ main > * { scroll-margin-top: calc(var(--nav-h) + 12px); }
 }
 
 /* ============ LOGIN MODAL ============ */
-/* Overlay */
+
 .login-overlay {
   position: fixed;
   inset: 0;
-  z-index: 2000; /* por encima del topbar */
+  z-index: 2000;
+
   display: flex;
-  align-items: flex-start;  /* centrado ligeramente más abajo */
+  align-items: center;
   justify-content: center;
-  padding-top: 110px;
+
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+
+  padding: max(16px, env(safe-area-inset-top, 0px))
+           max(16px, env(safe-area-inset-right, 0px))
+           max(16px, env(safe-area-inset-bottom, 0px))
+           max(16px, env(safe-area-inset-left, 0px));
+
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
   background: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(3px);
 }
 
-/* Contenedor relativo para ubicar la X flotante */
+/* Contenedor del login */
 .login-wrap {
   position: relative;
+  width: min(100%, 460px);
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+}
+
+/* Contenedor relativo para la tarjeta */
+.login-card-shell {
+  position: relative;
   width: 100%;
-  max-width: 460px;
-  padding: 0 8px; /* respiración lateral en pantallas pequeñas */
 }
 
-/* Wrapper del Card */
-.login-card-shell { position: relative; }
-
-/* X flotante fuera del card */
-.login-close-float {
-  position: absolute;
-  top: -22px;           /* sale del card */
-  right: -22px;
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
-  background: rgba(255,255,255,.9);
-  color: #0f172a;
-  box-shadow: 0 10px 28px rgba(2,6,23,.20);
-  backdrop-filter: blur(2px);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.login-close-float:hover { background: #ffffff; }
-
-/* Tarjeta del Login / formularios estilo login */
+/* Tarjeta */
 .login-panel {
   width: 100%;
   max-width: 420px;
+  max-height: calc(100dvh - 32px);
+  margin: 0 auto;
+
+  overflow-y: auto;
+
   border-radius: 20px;
-  padding: 28px 24px 28px;
+  padding: 28px 24px;
+
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(255, 255, 255, 0.98)
+  );
+
   box-shadow:
     0 18px 40px rgba(2, 6, 23, 0.14),
     0 2px 0 rgba(255, 255, 255, 0.75) inset;
-  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.98));
-  animation: fadeUp .22s ease-out;
+
+  animation: fadeUp 0.22s ease-out;
 }
 
-/* Título del login / formularios */
+/* Logo centrado */
+.login-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+/* Título */
 .login-title {
+  margin: 0 0 12px;
   text-align: center;
   font-weight: 800;
   color: var(--primary);
-  margin: 0 0 12px 0;
   font-size: clamp(1.4rem, 2vw, 1.8rem);
 }
 
-/* Pila/espaciado de elementos */
-.login-stack { margin-top: 6px; }
-.login-field { margin-bottom: 12px; }
+/* Formulario */
+.login-stack {
+  width: 100%;
+  margin-top: 6px;
+}
 
-/* Botón "ojo" para contraseña */
+.login-field {
+  position: relative;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.login-field input {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Botón de mostrar contraseña */
 .login-eye {
   position: absolute;
-  right: 8px;
   top: 50%;
-  transform: translateY(-50%);
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: #fff;
-  color: #475569;
+  right: 8px;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-.login-eye:hover {
-  color: var(--primary);
-  border-color: color-mix(in srgb, var(--primary-2) 35%, white);
+
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+
+  transform: translateY(-50%);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  color: #475569;
 }
 
-/* Mensaje de error */
+.login-eye:hover {
+  color: var(--primary);
+  border-color: color-mix(
+    in srgb,
+    var(--primary-2) 35%,
+    white
+  );
+}
+
+/* Error */
 .login-error {
+  margin: 4px 0 8px;
   color: #dc2626;
   font-size: 0.95rem;
   text-align: center;
-  margin: 4px 0 8px;
 }
 
-/* Botón compacto centrado */
+/* Botón principal */
 .login-btn-row {
   display: flex;
   justify-content: center;
   margin-top: 4px;
 }
+
 .login-btn-compact {
   min-width: 150px;
   padding: 10px 18px;
   border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(2,6,23,.10);
+  box-shadow: 0 8px 20px rgba(2, 6, 23, 0.1);
 }
 
-/* Variante de panel para formularios en página (idéntico al login, ancho máximo) */
-.contact-panel {
-  width: 100%;
-  max-width: 640px; /* pon 420 si quieres exactamente el ancho del login modal */
-  margin-inline: auto; /* centrado */
-}
-
-/* Selector de código + número en una fila con buen responsive */
-.phone-row {
-  display: grid;
-  grid-template-columns: 190px 1fr; /* ajusta 170–220px a gusto */
-  gap: 10px;
-}
-@media (max-width: 520px) {
-  .phone-row { grid-template-columns: 1fr; }
-}
-
-/* Política de datos: checklist alineado y accesible */
-.policy-row {
+/* Enlaces inferiores */
+.login-bottom-links {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
   gap: 10px;
-  font-size: .95rem;
-  color: var(--text);
+  margin-top: 14px;
+  text-align: center;
 }
-.policy-checkbox {
-  width: 18px;
-  height: 18px;
-  margin-top: 2px;
+
+.login-register {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Botón de cierre */
+.login-close-float {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  z-index: 2;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 42px;
+  height: 42px;
+  min-height: 42px;
+  padding: 0;
+
   border: 1px solid var(--border);
-  border-radius: 4px;
-  accent-color: var(--primary); /* color de marca en navegadores modernos */
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f172a;
+  box-shadow: 0 10px 28px rgba(2, 6, 23, 0.2);
 }
-.policy-link {
-  color: var(--primary);
-  font-weight: 600;
-  text-decoration: none;
-}
-.policy-link:hover { text-decoration: underline; }
 
-/* Ajuste responsive fino */
+/* Celulares */
 @media (max-width: 480px) {
-  .login-wrap { max-width: 92vw; }
-  .login-close-float { top: -18px; right: -18px; width: 38px; height: 38px; }
+ .login-overlay {
+  align-items: center;
+  overflow-y: auto;
 }
 
-.crud-panel {
-  max-width: 760px;
+  .login-wrap {
+    width: 100%;
+    max-width: 420px;
+    max-height: none;
+  }
+
+  .login-panel {
+    max-width: none;
+    max-height: none;
+    padding: 22px 16px;
+  }
+
+  .login-close-float {
+    top: -10px;
+    right: -8px;
+    width: 38px;
+    height: 38px;
+    min-height: 38px;
+  }
+}
+
+/* Pantallas bajas o celulares horizontales */
+@media (max-height: 650px) {
+  .login-overlay {
+  align-items: center;
+  overflow-y: auto;
+}
+
+  .login-panel {
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+
+  .login-logo svg {
+    width: 72px;
+    height: auto;
+  }
 }

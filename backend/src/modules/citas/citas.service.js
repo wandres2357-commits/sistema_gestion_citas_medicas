@@ -2,374 +2,908 @@
 
 import * as repository from "./citas.repository.js";
 
-/**
- * Servicio de citas médicas SGCM.
- *
- * Este servicio trabaja sobre tablas existentes de SGCMDB03:
- * - citas
- * - agendas
- * - horarios_medicos
- * - pacientes
- * - estados_cita
- * - tipos_cita
- * - motivos_cancelacion
- * - auditoria
- *
- * Y usa vistas para lectura:
- * - vw_citas
- * - vw_agendas
- * - vw_pacientes
- */
+import {
+  validarCrearCita,
+  validarFechaHoraFutura,
+  validarTransicionEstado,
+} from "./citas.validators.js";
 
+/**
+ * Convierte un valor a texto limpio.
+ */
 function normalizarTexto(value) {
-  return String(value || '').trim();
+  return String(value || "").trim();
 }
 
+/**
+ * Convierte un valor a número.
+ * Retorna null cuando el valor no es válido.
+ */
 function normalizarNumero(value) {
-  if (value === null || value === undefined || value === '') return null;
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return null;
+  }
 
   const parsed = Number(value);
 
-  return Number.isNaN(parsed) ? null : parsed;
+  return Number.isNaN(parsed)
+    ? null
+    : parsed;
 }
 
+/**
+ * Normaliza nombres de estados.
+ *
+ * Ejemplos:
+ * "No asistió"  -> "NO_ASISTIO"
+ * "En espera"   -> "EN_ESPERA"
+ * "re-programada" -> "RE_PROGRAMADA"
+ */
+function normalizarEstado(value) {
+  return String(value || "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_")
+    .replace(/-/g, "_")
+    .toUpperCase();
+}
+
+/**
+ * Valida formato YYYY-MM-DD.
+ */
 function validarFechaYYYYMMDD(fecha) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(String(fecha || ''));
+  return /^\d{4}-\d{2}-\d{2}$/.test(
+    String(fecha || "")
+  );
 }
 
+/**
+ * Valida formato HH:mm o HH:mm:ss.
+ */
 function validarHoraHHMM(hora) {
-  return /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(String(hora || ''));
+  return /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(
+    String(hora || "")
+  );
 }
 
-function validarFechaHoraFutura(fecha, hora) {
-  if (!validarFechaYYYYMMDD(fecha)) {
-    throw new Error('La fecha de la cita no tiene un formato válido. Use YYYY-MM-DD.');
-  }
-
-  if (!validarHoraHHMM(hora)) {
-    throw new Error('La hora de la cita no tiene un formato válido. Use HH:mm o HH:mm:ss.');
-  }
-
-  const horaNormalizada = String(hora).length === 5 ? `${hora}:00` : hora;
-  const fechaHoraCita = new Date(`${fecha}T${horaNormalizada}`);
-  const ahora = new Date();
-
-  if (Number.isNaN(fechaHoraCita.getTime())) {
-    throw new Error('La fecha u hora de la cita no es válida.');
-  }
-
-  if (fechaHoraCita < ahora) {
-    throw new Error('No se puede asignar una cita en una fecha u hora anterior a la actual.');
-  }
-}
-
-function validarCreacionCita(payload) {
-  const errores = [];
-
-  if (!normalizarNumero(payload.paciente_id)) {
-    errores.push('El paciente es obligatorio.');
-  }
-
-  if (!normalizarNumero(payload.tipo_cita_id)) {
-    errores.push('El tipo de cita es obligatorio.');
-  }
-
-  if (!payload.fecha) {
-    errores.push('La fecha de la cita es obligatoria.');
-  }
-
-  if (!payload.hora) {
-    errores.push('La hora de la cita es obligatoria.');
-  }
-
-  if (!normalizarNumero(payload.agenda_id) && !normalizarNumero(payload.horario_medico_id)) {
-    errores.push('Debe seleccionar una agenda u horario médico disponible.');
-  }
-
-  if (
-    payload.valor_cita !== undefined &&
-    payload.valor_cita !== null &&
-    payload.valor_cita !== '' &&
-    Number(payload.valor_cita) < 0
-  ) {
-    errores.push('El valor de la cita no puede ser negativo.');
-  }
-
-  if (errores.length) {
-    throw new Error(errores.join(' '));
-  }
-}
-
-function validarConsultaDisponibilidad(query) {
+/**
+ * Valida parámetros de consulta de disponibilidad.
+ */
+function validarConsultaDisponibilidad(query = {}) {
   const errores = [];
 
   if (!normalizarNumero(query.especialidad_id)) {
-    errores.push('La especialidad es obligatoria para consultar disponibilidad.');
+    errores.push(
+      "La especialidad es obligatoria para consultar disponibilidad."
+    );
   }
 
   if (!query.fecha) {
-    errores.push('La fecha es obligatoria para consultar disponibilidad.');
+    errores.push(
+      "La fecha es obligatoria para consultar disponibilidad."
+    );
   }
 
-  if (query.fecha && !validarFechaYYYYMMDD(query.fecha)) {
-    errores.push('La fecha debe tener formato YYYY-MM-DD.');
+  if (
+    query.fecha &&
+    !validarFechaYYYYMMDD(query.fecha)
+  ) {
+    errores.push(
+      "La fecha debe tener formato YYYY-MM-DD."
+    );
   }
 
   if (errores.length) {
-    throw new Error(errores.join(' '));
+    throw new Error(errores.join(" "));
   }
 }
 
-function validarTransicionEstado(estadoActualCodigo, nuevoEstadoCodigo) {
-  const estadoActual = normalizarTexto(estadoActualCodigo).toUpperCase();
-  const estadoNuevo = normalizarTexto(nuevoEstadoCodigo).toUpperCase();
-
-  const transicionesPermitidas = {
-    ASIGNADA: ['CONFIRMADA', 'CANCELADA', 'ATENDIDA', 'NO_ASISTIO'],
-    CONFIRMADA: ['CANCELADA', 'ATENDIDA', 'NO_ASISTIO'],
-    CANCELADA: [],
-    ATENDIDA: [],
-    NO_ASISTIO: []
-  };
-
-  if (!transicionesPermitidas[estadoActual]) {
-    throw new Error(`El estado actual ${estadoActual} no está configurado para transición.`);
-  }
-
-  if (!transicionesPermitidas[estadoActual].includes(estadoNuevo)) {
-    throw new Error(`No se permite cambiar la cita de ${estadoActual} a ${estadoNuevo}.`);
-  }
-}
-
+/**
+ * Normaliza el filtro de citas.
+ */
 function mapearMostrarCitas(mostrar) {
-  const value = normalizarTexto(mostrar).toLowerCase();
+  const value = normalizarTexto(mostrar)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 
-  if (['historicas', 'históricas', 'pasadas'].includes(value)) {
-    return 'historicas';
+  if (
+    [
+      "historicas",
+      "pasadas",
+      "anteriores",
+    ].includes(value)
+  ) {
+    return "historicas";
   }
 
-  if (['todas', 'todo'].includes(value)) {
-    return 'todas';
+  if (
+    [
+      "todas",
+      "todo",
+    ].includes(value)
+  ) {
+    return "todas";
   }
 
-  return 'proximas';
+  return "proximas";
 }
 
+/**
+ * Lista citas con filtros.
+ */
 async function listarCitas(query = {}) {
-  const pacienteId = normalizarNumero(query.paciente_id);
-  const estadoCitaId = normalizarNumero(query.estado_cita_id || query.estado_id);
-  const mostrar = mapearMostrarCitas(query.mostrar);
+  const pacienteId = normalizarNumero(
+    query.paciente_id
+  );
+
+  const estadoCitaId = normalizarNumero(
+    query.estado_cita_id ||
+    query.estado_id
+  );
+
+  const mostrar = mapearMostrarCitas(
+    query.mostrar
+  );
 
   return repository.listarCitas({
     pacienteId,
     estadoCitaId,
-    mostrar
+    mostrar,
   });
 }
 
+/**
+ * Consulta disponibilidad médica.
+ */
 async function listarDisponibilidad(query = {}) {
   validarConsultaDisponibilidad(query);
 
   return repository.listarDisponibilidad({
-    especialidadId: normalizarNumero(query.especialidad_id),
-    sedeId: normalizarNumero(query.sede_id),
-    medicoId: normalizarNumero(query.medico_id),
-    consultorioId: normalizarNumero(query.consultorio_id),
-    fecha: query.fecha
+    especialidadId: normalizarNumero(
+      query.especialidad_id
+    ),
+
+    sedeId: normalizarNumero(
+      query.sede_id
+    ),
+
+    medicoId: normalizarNumero(
+      query.medico_id
+    ),
+
+    consultorioId: normalizarNumero(
+      query.consultorio_id
+    ),
+
+    fecha: query.fecha,
   });
 }
 
-async function crearCita(payload = {}, usuarioId = null) {
-  validarCreacionCita(payload);
-  validarFechaHoraFutura(payload.fecha, payload.hora);
+/**
+ * Crea una cita médica con estado PROGRAMADA.
+ */
+async function crearCita(
+  payload = {},
+  usuarioId = null
+) {
+  validarCrearCita(payload);
 
-  const pacienteId = normalizarNumero(payload.paciente_id);
-  const agendaId = normalizarNumero(payload.agenda_id);
-  const horarioMedicoId = normalizarNumero(payload.horario_medico_id);
-  const medicoId = normalizarNumero(payload.medico_id);
-  const especialidadId = normalizarNumero(payload.especialidad_id);
-  const sedeId = normalizarNumero(payload.sede_id);
-  const consultorioId = normalizarNumero(payload.consultorio_id);
-  const tipoCitaId = normalizarNumero(payload.tipo_cita_id);
+  validarFechaHoraFutura(
+    payload.fecha,
+    payload.hora
+  );
 
-  const paciente = await repository.obtenerPacientePorId(pacienteId);
+  const pacienteId = normalizarNumero(
+    payload.paciente_id
+  );
+
+  const agendaId = normalizarNumero(
+    payload.agenda_id
+  );
+
+  const horarioMedicoId = normalizarNumero(
+    payload.horario_medico_id
+  );
+
+  const medicoId = normalizarNumero(
+    payload.medico_id
+  );
+
+  const especialidadId = normalizarNumero(
+    payload.especialidad_id
+  );
+
+  const sedeId = normalizarNumero(
+    payload.sede_id
+  );
+
+  const consultorioId = normalizarNumero(
+    payload.consultorio_id
+  );
+
+  const tipoCitaId = normalizarNumero(
+    payload.tipo_cita_id
+  );
+
+  const observacion =
+    normalizarTexto(
+      payload.observacion ||
+      payload.observaciones
+    ) || null;
+
+  /*
+   * Validar paciente.
+   */
+  const paciente =
+    await repository.obtenerPacientePorId(
+      pacienteId
+    );
 
   if (!paciente) {
-    throw new Error('El paciente no existe.');
+    throw new Error(
+      "El paciente no existe."
+    );
   }
 
-  const pacienteActivo = await repository.validarPacienteActivo(pacienteId);
+  const pacienteActivo =
+    await repository.validarPacienteActivo(
+      pacienteId
+    );
 
   if (!pacienteActivo) {
-    throw new Error('El paciente no se encuentra activo.');
+    throw new Error(
+      "El paciente no se encuentra activo."
+    );
   }
 
-  const estadoAsignada = await repository.obtenerEstadoCitaPorCodigo('ASIGNADA');
+  /*
+   * Obtener estado inicial.
+   */
+  const estadoProgramada =
+    await repository.obtenerEstadoCitaPorCodigo(
+      "PROGRAMADA"
+    );
 
-  if (!estadoAsignada) {
-    throw new Error('No existe el estado de cita ASIGNADA en la tabla estados_cita.');
+  if (!estadoProgramada) {
+    throw new Error(
+      "No existe el estado PROGRAMADA en la tabla estados_cita."
+    );
   }
 
-  const agendaDisponible = await repository.validarAgendaDisponible({
-    agendaId,
-    horarioMedicoId,
-    fecha: payload.fecha,
-    hora: payload.hora
-  });
+  /*
+   * Validar agenda u horario.
+   */
+  const agendaDisponible =
+    await repository.validarAgendaDisponible({
+      agendaId,
+      horarioMedicoId,
+      fecha: payload.fecha,
+      hora: payload.hora,
+    });
 
   if (!agendaDisponible) {
-    throw new Error('La agenda u horario seleccionado no se encuentra disponible.');
+    throw new Error(
+      "La agenda u horario seleccionado no se encuentra disponible."
+    );
   }
 
-  const existeCruce = await repository.existeCitaAsignada({
-    agendaId,
-    horarioMedicoId,
-    medicoId,
-    fecha: payload.fecha,
-    hora: payload.hora
-  });
+  /*
+   * Validar que el horario seleccionado coincida con
+   * el rango y la vigencia de horarios_medicos.
+   */
+  if (horarioMedicoId) {
+    const horarioValido =
+      await repository.validarHorarioMedicoDisponible({
+        horarioMedicoId,
+        fecha: payload.fecha,
+        hora: payload.hora,
+      });
+
+    if (!horarioValido) {
+      throw new Error(
+        "La fecha u hora seleccionada no corresponde al horario médico configurado."
+      );
+    }
+  }
+
+  /*
+   * Validar cruce contra otras citas.
+   */
+  const existeCruce =
+    await repository.existeCitaAsignada({
+      agendaId,
+      horarioMedicoId,
+      medicoId,
+      fecha: payload.fecha,
+      hora: payload.hora,
+    });
 
   if (existeCruce) {
-    throw new Error('Ya existe una cita asignada para el recurso en esa fecha y hora.');
+    throw new Error(
+      "Ya existe una cita asignada para el recurso en esa fecha y hora."
+    );
   }
 
-  const bloqueoAgenda = await repository.existeBloqueoAgenda({
-    agendaId,
-    horarioMedicoId,
-    medicoId,
-    fecha: payload.fecha,
-    hora: payload.hora
-  });
+  /*
+   * Validar bloqueos de agenda.
+   */
+  const bloqueoAgenda =
+    await repository.existeBloqueoAgenda({
+      agendaId,
+      horarioMedicoId,
+      medicoId,
+      fecha: payload.fecha,
+      hora: payload.hora,
+    });
 
   if (bloqueoAgenda) {
-    throw new Error('La agenda seleccionada se encuentra bloqueada para la fecha u hora indicada.');
+    throw new Error(
+      "La agenda seleccionada se encuentra bloqueada para la fecha u hora indicada."
+    );
   }
 
-  const consecutivo = await repository.generarConsecutivo();
+  /*
+   * Crear cita.
+   *
+   * La tabla citas no contiene actualmente:
+   * - consecutivo
+   * - horario_medico_id
+   * - valor_cita
+   * - usuario_creacion_id
+   *
+   * horario_medico_id se usa para resolver los datos
+   * relacionados, pero no se inserta en citas.
+   */
+  const citaCreada =
+    await repository.crearCita({
+      paciente_id: pacienteId,
+      agenda_id: agendaId,
+      horario_medico_id: horarioMedicoId,
+      medico_id: medicoId,
+      especialidad_id: especialidadId,
+      sede_id: sedeId,
+      consultorio_id: consultorioId,
+      tipo_cita_id: tipoCitaId,
+      estado_cita_id: estadoProgramada.id,
+      fecha: payload.fecha,
+      hora: payload.hora,
+      observacion,
+    });
 
-  const citaCreada = await repository.crearCita({
-    consecutivo,
-    paciente_id: pacienteId,
-    agenda_id: agendaId,
-    horario_medico_id: horarioMedicoId,
-    medico_id: medicoId,
-    especialidad_id: especialidadId,
-    sede_id: sedeId,
-    consultorio_id: consultorioId,
-    tipo_cita_id: tipoCitaId,
-    estado_cita_id: estadoAsignada.id,
-    fecha: payload.fecha,
-    hora: payload.hora,
-    valor_cita: payload.valor_cita || 0,
-    observacion: normalizarTexto(payload.observacion) || null,
-    usuario_creacion_id: usuarioId
-  });
-
+  /*
+   * Registrar auditoría.
+   */
   await repository.registrarAuditoria({
-    tabla: 'citas',
+    tabla: "citas",
     registro_id: citaCreada.id,
-    accion: 'CREAR_CITA',
+    accion: "CREAR_CITA",
     valor_anterior: null,
-    valor_nuevo: JSON.stringify(citaCreada),
-    usuario_id: usuarioId
+    valor_nuevo: JSON.stringify({
+      ...citaCreada,
+      estado: estadoProgramada.nombre,
+    }),
+    usuario_id: usuarioId,
   });
 
   return citaCreada;
 }
 
+/**
+ * Cambia el estado de una cita.
+ */
 async function cambiarEstado(params = {}) {
-  const citaId = normalizarNumero(params.citaId || params.cita_id);
-  const estadoCodigo = normalizarTexto(params.estadoCodigo || params.estado_codigo).toUpperCase();
-  const usuarioId = normalizarNumero(params.usuarioId || params.usuario_id);
-  const motivoCancelacionId = normalizarNumero(params.motivoCancelacionId || params.motivo_cancelacion_id);
-  const observacion = normalizarTexto(params.observacion) || null;
+  const citaId = normalizarNumero(
+    params.citaId ||
+    params.cita_id
+  );
+
+  const estadoCodigo = normalizarEstado(
+    params.estadoCodigo ||
+    params.estado_codigo
+  );
+
+  const usuarioId = normalizarNumero(
+    params.usuarioId ||
+    params.usuario_id
+  );
+
+  const motivoCancelacionId =
+    normalizarNumero(
+      params.motivoCancelacionId ||
+      params.motivo_cancelacion_id
+    );
+
+  const observacion =
+    normalizarTexto(params.observacion) ||
+    null;
 
   if (!citaId) {
-    throw new Error('El identificador de la cita es obligatorio.');
+    throw new Error(
+      "El identificador de la cita es obligatorio."
+    );
   }
 
   if (!estadoCodigo) {
-    throw new Error('El nuevo estado de la cita es obligatorio.');
+    throw new Error(
+      "El nuevo estado de la cita es obligatorio."
+    );
   }
 
-  const citaActual = await repository.obtenerCitaPorId(citaId);
+  /*
+   * Obtener cita.
+   */
+  const citaActual =
+    await repository.obtenerCitaPorId(
+      citaId
+    );
 
   if (!citaActual) {
-    throw new Error('La cita no existe.');
+    throw new Error(
+      "La cita no existe."
+    );
   }
 
-  const estadoActual = await repository.obtenerEstadoCitaPorId(citaActual.estado_cita_id);
+  /*
+   * Obtener estado actual.
+   */
+  const estadoActual =
+    await repository.obtenerEstadoCitaPorId(
+      citaActual.estado_cita_id
+    );
 
   if (!estadoActual) {
-    throw new Error('El estado actual de la cita no existe en estados_cita.');
+    throw new Error(
+      "El estado actual de la cita no existe en estados_cita."
+    );
   }
 
-  const nuevoEstado = await repository.obtenerEstadoCitaPorCodigo(estadoCodigo);
+  /*
+   * Obtener estado destino.
+   */
+  const nuevoEstado =
+    await repository.obtenerEstadoCitaPorCodigo(
+      estadoCodigo
+    );
 
   if (!nuevoEstado) {
-    throw new Error(`No existe el estado de cita ${estadoCodigo}.`);
+    throw new Error(
+      `No existe el estado de cita ${estadoCodigo}.`
+    );
   }
 
-  validarTransicionEstado(estadoActual.codigo, nuevoEstado.codigo);
+  /*
+   * Validar transición.
+   */
+  validarTransicionEstado(
+    estadoActual.codigo,
+    nuevoEstado.codigo
+  );
 
-  if (estadoCodigo === 'CANCELADA' && !motivoCancelacionId) {
-    throw new Error('Debe seleccionar un motivo de cancelación.');
+  /*
+   * Validaciones específicas por estado.
+   */
+  if (
+    nuevoEstado.codigo === "CANCELADA" &&
+    !motivoCancelacionId
+  ) {
+    throw new Error(
+      "Debe seleccionar un motivo de cancelación."
+    );
   }
 
+  if (
+    nuevoEstado.codigo === "REPROGRAMADA" &&
+    !observacion
+  ) {
+    throw new Error(
+      "Debe registrar una observación para reprogramar la cita."
+    );
+  }
+
+  if (
+    nuevoEstado.codigo === "EN_ESPERA" &&
+    !observacion
+  ) {
+    throw new Error(
+      "Debe registrar una observación para enviar la cita a espera."
+    );
+  }
+
+  /*
+   * Actualizar.
+   */
   await repository.actualizarEstadoCita({
     citaId,
     estadoCitaId: nuevoEstado.id,
     motivoCancelacionId,
     observacion,
-    usuarioId
+    usuarioId,
   });
 
-  const citaActualizada = await repository.obtenerCitaPorId(citaId);
+  const citaActualizada =
+    await repository.obtenerCitaPorId(
+      citaId
+    );
 
+  /*
+   * Auditoría.
+   */
   await repository.registrarAuditoria({
-    tabla: 'citas',
+    tabla: "citas",
     registro_id: citaId,
-    accion: 'CAMBIAR_ESTADO_CITA',
-    valor_anterior: JSON.stringify(citaActual),
-    valor_nuevo: JSON.stringify(citaActualizada),
-    usuario_id: usuarioId
+    accion: "CAMBIAR_ESTADO_CITA",
+
+    valor_anterior: JSON.stringify({
+      ...citaActual,
+      estado: estadoActual.nombre,
+    }),
+
+    valor_nuevo: JSON.stringify({
+      ...citaActualizada,
+      estado: nuevoEstado.nombre,
+      motivo_cancelacion_id:
+        motivoCancelacionId,
+    }),
+
+    usuario_id: usuarioId,
   });
 
   return citaActualizada;
 }
 
-async function confirmarCita(citaId, usuarioId = null) {
+/**
+ * PROGRAMADA -> CONFIRMADA
+ */
+async function confirmarCita(
+  citaId,
+  usuarioId = null
+) {
   return cambiarEstado({
     citaId,
-    estadoCodigo: 'CONFIRMADA',
-    usuarioId
+    estadoCodigo: "CONFIRMADA",
+    usuarioId,
   });
 }
 
-async function cancelarCita(citaId, payload = {}, usuarioId = null) {
+/**
+ * PROGRAMADA o CONFIRMADA -> CANCELADA
+ */
+async function cancelarCita(
+  citaId,
+  payload = {},
+  usuarioId = null
+) {
   return cambiarEstado({
     citaId,
-    estadoCodigo: 'CANCELADA',
-    motivoCancelacionId: payload.motivo_cancelacion_id,
-    observacion: payload.observacion,
-    usuarioId
+    estadoCodigo: "CANCELADA",
+    motivoCancelacionId:
+      payload.motivo_cancelacion_id,
+    observacion:
+      payload.observacion ||
+      payload.observaciones,
+    usuarioId,
   });
 }
 
-async function marcarAtendida(citaId, usuarioId = null) {
+/**
+ * CONFIRMADA -> ATENDIDA
+ */
+async function marcarAtendida(
+  citaId,
+  usuarioId = null
+) {
   return cambiarEstado({
     citaId,
-    estadoCodigo: 'ATENDIDA',
-    usuarioId
+    estadoCodigo: "ATENDIDA",
+    usuarioId,
   });
 }
 
-async function marcarNoAsistio(citaId, usuarioId = null) {
+/**
+ * CONFIRMADA -> NO_ASISTIO
+ */
+async function marcarNoAsistio(
+  citaId,
+  payload = {},
+  usuarioId = null
+) {
   return cambiarEstado({
     citaId,
-    estadoCodigo: 'NO_ASISTIO',
-    usuarioId
+    estadoCodigo: "NO_ASISTIO",
+    observacion:
+      payload.observacion ||
+      payload.observaciones,
+    usuarioId,
   });
+}
+
+/**
+ * PROGRAMADA o REPROGRAMADA -> EN_ESPERA
+ */
+async function marcarEnEspera(
+  citaId,
+  payload = {},
+  usuarioId = null
+) {
+  return cambiarEstado({
+    citaId,
+    estadoCodigo: "EN_ESPERA",
+    observacion:
+      payload.observacion ||
+      payload.observaciones,
+    usuarioId,
+  });
+}
+
+/**
+ * Marca una cita como REPROGRAMADA.
+ *
+ * Esta acción cambia únicamente el estado.
+ * La asignación de la nueva fecha se realiza mediante
+ * reprogramarFechaCita.
+ */
+async function marcarReprogramada(
+  citaId,
+  payload = {},
+  usuarioId = null
+) {
+  return cambiarEstado({
+    citaId,
+    estadoCodigo: "REPROGRAMADA",
+    observacion:
+      payload.observacion ||
+      payload.observaciones,
+    usuarioId,
+  });
+}
+
+/**
+ * Reprograma fecha, hora y recurso de una cita.
+ *
+ * Flujo:
+ * 1. Valida la transición hacia REPROGRAMADA.
+ * 2. Valida la nueva fecha y hora.
+ * 3. Valida agenda, cruces y bloqueos.
+ * 4. Actualiza datos de la cita.
+ * 5. Registra auditoría.
+ */
+async function reprogramarFechaCita(
+  citaId,
+  payload = {},
+  usuarioId = null
+) {
+  const id = normalizarNumero(citaId);
+
+  if (!id) {
+    throw new Error(
+      "El identificador de la cita es obligatorio."
+    );
+  }
+
+  const fecha = normalizarTexto(
+    payload.fecha
+  );
+
+  const hora = normalizarTexto(
+    payload.hora
+  );
+
+  const observacion =
+    normalizarTexto(
+      payload.observacion ||
+      payload.observaciones
+    );
+
+  if (!fecha) {
+    throw new Error(
+      "La nueva fecha es obligatoria."
+    );
+  }
+
+  if (!hora) {
+    throw new Error(
+      "La nueva hora es obligatoria."
+    );
+  }
+
+  if (!observacion) {
+    throw new Error(
+      "Debe registrar el motivo de la reprogramación."
+    );
+  }
+
+  if (!validarFechaYYYYMMDD(fecha)) {
+    throw new Error(
+      "La nueva fecha debe tener formato YYYY-MM-DD."
+    );
+  }
+
+  if (!validarHoraHHMM(hora)) {
+    throw new Error(
+      "La nueva hora debe tener formato HH:mm o HH:mm:ss."
+    );
+  }
+
+  validarFechaHoraFutura(
+    fecha,
+    hora
+  );
+
+  const citaActual =
+    await repository.obtenerCitaPorId(id);
+
+  if (!citaActual) {
+    throw new Error(
+      "La cita no existe."
+    );
+  }
+
+  const estadoActual =
+    await repository.obtenerEstadoCitaPorId(
+      citaActual.estado_cita_id
+    );
+
+  if (!estadoActual) {
+    throw new Error(
+      "El estado actual de la cita no existe."
+    );
+  }
+
+  const estadoReprogramada =
+    await repository.obtenerEstadoCitaPorCodigo(
+      "REPROGRAMADA"
+    );
+
+  if (!estadoReprogramada) {
+    throw new Error(
+      "No existe el estado REPROGRAMADA."
+    );
+  }
+
+  validarTransicionEstado(
+    estadoActual.codigo,
+    estadoReprogramada.codigo
+  );
+
+  const agendaId =
+    normalizarNumero(payload.agenda_id) ||
+    citaActual.agenda_id;
+
+  const horarioMedicoId =
+    normalizarNumero(
+      payload.horario_medico_id
+    );
+
+  const medicoId =
+    normalizarNumero(payload.medico_id) ||
+    citaActual.medico_id;
+
+  const especialidadId =
+    normalizarNumero(
+      payload.especialidad_id
+    ) ||
+    citaActual.especialidad_id;
+
+  const sedeId =
+    normalizarNumero(payload.sede_id) ||
+    citaActual.sede_id;
+
+  const consultorioId =
+    normalizarNumero(
+      payload.consultorio_id
+    ) ||
+    citaActual.consultorio_id;
+
+  if (!agendaId && !horarioMedicoId) {
+    throw new Error(
+      "Debe seleccionar una agenda u horario médico para reprogramar."
+    );
+  }
+
+  const agendaDisponible =
+    await repository.validarAgendaDisponible({
+      agendaId,
+      horarioMedicoId,
+      fecha,
+      hora,
+    });
+
+  if (!agendaDisponible) {
+    throw new Error(
+      "La nueva agenda u horario no se encuentra disponible."
+    );
+  }
+
+  if (horarioMedicoId) {
+    const horarioValido =
+      await repository.validarHorarioMedicoDisponible({
+        horarioMedicoId,
+        fecha,
+        hora,
+      });
+
+    if (!horarioValido) {
+      throw new Error(
+        "La nueva fecha u hora no corresponde al horario médico seleccionado."
+      );
+    }
+  }
+
+  const existeCruce =
+    await repository.existeCitaAsignada({
+      agendaId,
+      horarioMedicoId,
+      medicoId,
+      fecha,
+      hora,
+      excluirCitaId: id,
+    });
+
+  if (existeCruce) {
+    throw new Error(
+      "Ya existe una cita asignada para el recurso en la nueva fecha y hora."
+    );
+  }
+
+  const bloqueoAgenda =
+    await repository.existeBloqueoAgenda({
+      agendaId,
+      horarioMedicoId,
+      medicoId,
+      fecha,
+      hora,
+    });
+
+  if (bloqueoAgenda) {
+    throw new Error(
+      "La agenda está bloqueada para la nueva fecha u hora."
+    );
+  }
+
+  await repository.reprogramarCita({
+    citaId: id,
+    pacienteId: citaActual.paciente_id,
+    agendaId,
+    horarioMedicoId,
+    medicoId,
+    especialidadId,
+    sedeId,
+    consultorioId,
+    tipoCitaId: citaActual.tipo_cita_id,
+    estadoCitaId: estadoReprogramada.id,
+    fecha,
+    hora,
+    observacion,
+  });
+
+  const citaActualizada =
+    await repository.obtenerCitaPorId(id);
+
+  await repository.registrarAuditoria({
+    tabla: "citas",
+    registro_id: id,
+    accion: "REPROGRAMAR_CITA",
+
+    valor_anterior: JSON.stringify({
+      ...citaActual,
+      estado: estadoActual.nombre,
+    }),
+
+    valor_nuevo: JSON.stringify({
+      ...citaActualizada,
+      estado: estadoReprogramada.nombre,
+    }),
+
+    usuario_id: usuarioId,
+  });
+
+  return citaActualizada;
 }
 
 export {
@@ -381,4 +915,7 @@ export {
   cancelarCita,
   marcarAtendida,
   marcarNoAsistio,
+  marcarEnEspera,
+  marcarReprogramada,
+  reprogramarFechaCita,
 };

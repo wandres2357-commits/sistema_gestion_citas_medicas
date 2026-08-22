@@ -39,11 +39,23 @@ export default function App() {
           session?.user?.role ||
           session?.usuario?.rol ||
           null;
-          
+
           if (!rawRole && Array.isArray(session?.user?.roles)) {
-            rawRole = session.user.roles[0];
-          }
-          role = typeof rawRole === "string" ? rawRole.toLowerCase() : null;
+  const firstRole = session.user.roles[0];
+
+  rawRole =
+    typeof firstRole === "string"
+      ? firstRole
+      : firstRole?.nombre ||
+        firstRole?.rol ||
+        firstRole?.role ||
+        null;
+}
+
+role =
+  typeof rawRole === "string"
+    ? rawRole.trim().toLowerCase()
+    : null;
         }
       } catch {}
     }
@@ -72,7 +84,7 @@ console.log(
   const [isLogged, setIsLogged] = useState(init.isLogged);
 
   // Rol válido para Admin
-  const isAdmin = role === "admin" || role === "administrador";
+  const isAdmin = ["admin","administrador","administrator",].includes(String(role || "").toLowerCase());
   // Si tu backend alguna vez usa "administrator", puedes ampliar:
   // const isAdmin = ["admin", "administrador", "administrator"].includes(role);
 
@@ -117,11 +129,18 @@ useEffect(() => {
     <AdminShell
       user={session?.user}
       onLogout={() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        localStorage.removeItem("session");
+        
         setRole(null);
         setIsLogged(false);
         setShowLogin(false);
         setView("inicio");
-      }}
+        
+        window.dispatchEvent(new Event("auth:updated"));
+      }
+    }
     />
   );
 }

@@ -1,20 +1,25 @@
+// backend/src/modules/auth/auth.repository.js
 import { pool } from "../../config/db.js";
 
 export async function findByCorreo(correo) {
+  const correoNormalizado = String(correo || "")
+    .trim()
+    .toLowerCase();
+
   const [rows] = await pool.query(
     `
-    SELECT
-      id,
-      nombre_completo,
-      correo,
-      password_hash,
-      estado
-    FROM usuarios
-    WHERE correo = ?
-    LIMIT 1
+      SELECT
+        id,
+        nombre_completo,
+        correo,
+        password_hash,
+        estado
+      FROM usuarios
+      WHERE LOWER(TRIM(correo)) = ?
+      LIMIT 1
     `,
-    [correo]
+    [correoNormalizado]
   );
 
-  return rows[0];
+  return rows[0] || null;
 }
