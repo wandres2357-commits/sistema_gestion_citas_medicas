@@ -132,7 +132,7 @@ export default function Login({ onSuccess }) {
                   setRemember(e.target.checked)
                 }
               />
-              <span>Registrar usuario y contraseña</span>
+              <span>Recordar usuario</span>
             </label>
           </div>
 
