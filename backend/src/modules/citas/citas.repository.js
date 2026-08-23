@@ -107,9 +107,7 @@ async function listarCitas({
 
   if (mostrar === "proximas") {
     where.push("DATE(c.fecha_hora) >= CURDATE()");
-  }
-
-  if (mostrar === "historicas") {
+  } else if (mostrar === "historicas") {
     where.push("DATE(c.fecha_hora) < CURDATE()");
   }
 
@@ -143,7 +141,8 @@ async function listarCitas({
 
       c.observaciones,
 
-      ec.nombre AS estado,
+      TRIM(UPPER(ec.nombre)) AS estado,
+
       tc.nombre AS tipo
 
     FROM citas c
@@ -163,9 +162,22 @@ async function listarCitas({
     ORDER BY c.fecha_hora ASC
   `;
 
+  console.log("LISTAR CITAS FILTROS:", {
+    pacienteId,
+    mostrar,
+    estadoCitaId,
+  });
+
+  console.log("LISTAR CITAS PARAMS:", params);
+
   const [rows] = await db.query(sql, params);
 
-  return
+  console.log(
+    "LISTAR CITAS TOTAL:",
+    Array.isArray(rows) ? rows.length : "NO ES ARRAY"
+  );
+
+  return Array.isArray(rows) ? rows : [];
 }
 /**
  * Consulta horarios médicos vigentes para una fecha.
@@ -801,9 +813,10 @@ async function existeBloqueoAgenda({
  * Obtiene estado por ID.
  */
 async function obtenerEstadoCitaPorId(
-  id
+  id,
+  executor = db
 ) {
-  const [rows] = await db.query(
+  const [rows] = await executor.query(
     `
     SELECT *
     FROM estados_cita
@@ -821,10 +834,9 @@ async function obtenerEstadoCitaPorId(
 
   return {
     ...estado,
-    codigo:
-      normalizarEstadoCodigo(
-        estado.nombre
-      ),
+    codigo: normalizarEstadoCodigo(
+      estado.nombre
+    ),
   };
 }
 
@@ -832,9 +844,10 @@ async function obtenerEstadoCitaPorId(
  * Obtiene estado por nombre normalizado.
  */
 async function obtenerEstadoCitaPorCodigo(
-  codigo
+  codigo,
+  executor = db
 ) {
-  const [rows] = await db.query(
+  const [rows] = await executor.query(
     `
     SELECT *
     FROM estados_cita
@@ -842,16 +855,15 @@ async function obtenerEstadoCitaPorCodigo(
   );
 
   const codigoNormalizado =
-    normalizarEstadoCodigo(
-      codigo
-    );
+    normalizarEstadoCodigo(codigo);
 
-  const estado = rows.find(
-    (row) =>
+  const estado = rows.find((row) => {
+    return (
       normalizarEstadoCodigo(
         row.nombre
       ) === codigoNormalizado
-  );
+    );
+  });
 
   if (!estado) {
     return null;
@@ -859,13 +871,11 @@ async function obtenerEstadoCitaPorCodigo(
 
   return {
     ...estado,
-    codigo:
-      normalizarEstadoCodigo(
-        estado.nombre
-      ),
+    codigo: normalizarEstadoCodigo(
+      estado.nombre
+    ),
   };
 }
-
 /**
  * Crea una cita.
  */
@@ -952,14 +962,26 @@ async function crearCita(payload) {
     result.insertId
   );
 }
-
 /**
- * Obtiene una cita.
+ * Obtiene una cita por ID.
+ *
+ * executor puede ser:
+ * - el pool db
+ * - una conexión transaccional
+ *
+ * bloquear = true agrega FOR UPDATE y bloquea
+ * la fila durante la transacción.
  */
 async function obtenerCitaPorId(
-  citaId
+  citaId,
+  executor = db,
+  bloquear = false
 ) {
-  const [rows] = await db.query(
+  const bloqueoSql = bloquear
+    ? "FOR UPDATE"
+    : "";
+
+  const [rows] = await executor.query(
     `
     SELECT
       c.*,
@@ -975,7 +997,10 @@ async function obtenerCitaPorId(
       ON tc.id = c.tipo_cita_id
 
     WHERE c.id = ?
+
     LIMIT 1
+
+    ${bloqueoSql}
     `,
     [citaId]
   );
@@ -986,15 +1011,19 @@ async function obtenerCitaPorId(
 /**
  * Actualiza el estado de una cita.
  *
- * motivoCancelacionId se agrega a observaciones porque
- * citas todavía no tiene la columna motivo_cancelacion_id.
+ * executor puede ser el pool o una conexión
+ * perteneciente a una transacción.
  */
-async function actualizarEstadoCita({
-  citaId,
-  estadoCitaId,
-  motivoCancelacionId = null,
-  observacion = null,
-}) {
+async function actualizarEstadoCita(
+  {
+    citaId,
+    estadoCitaId,
+    motivoCancelacionId = null,
+    observacion = null,
+    usuarioId = null,
+  },
+  executor = db
+) {
   const partesDetalle = [];
 
   if (motivoCancelacionId) {
@@ -1004,17 +1033,15 @@ async function actualizarEstadoCita({
   }
 
   if (observacion) {
-    partesDetalle.push(
-      observacion
-    );
+    partesDetalle.push(observacion);
   }
 
   const detalle =
-    partesDetalle.length
+    partesDetalle.length > 0
       ? partesDetalle.join(" | ")
       : null;
 
-  await db.query(
+  const [result] = await executor.query(
     `
     UPDATE citas
 
@@ -1046,6 +1073,14 @@ async function actualizarEstadoCita({
       citaId,
     ]
   );
+
+  if (result.affectedRows !== 1) {
+    throw new Error(
+      "No fue posible actualizar el estado de la cita."
+    );
+  }
+
+  return result;
 }
 
 /**
@@ -1158,12 +1193,16 @@ async function reprogramarCita({
     ]
   );
 }
-
 /**
- * Registra auditoría.
+ * Registra una operación en auditoría.
+ *
+ * executor puede ser:
+ * - db
+ * - una conexión transaccional
  */
 async function registrarAuditoria(
-  payload
+  payload,
+  executor = db
 ) {
   const valorAnterior =
     payload.valor_anterior === null ||
@@ -1185,7 +1224,7 @@ async function registrarAuditoria(
             payload.valor_nuevo
           );
 
-  await db.query(
+  const [result] = await executor.query(
     `
     INSERT INTO auditoria (
       usuario_id,
@@ -1197,23 +1236,14 @@ async function registrarAuditoria(
       ip,
       user_agent
     )
-    VALUES (
-      ?,
-      ?,
-      ?,
-      ?,
-      CAST(? AS JSON),
-      CAST(? AS JSON),
-      ?,
-      ?
-    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       payload.usuario_id || null,
       payload.accion,
       payload.tabla ||
-      payload.tabla_afectada ||
-      "citas",
+        payload.tabla_afectada ||
+        "citas",
       payload.registro_id,
       valorAnterior,
       valorNuevo,
@@ -1221,8 +1251,87 @@ async function registrarAuditoria(
       payload.user_agent || null,
     ]
   );
-}
 
+  if (!result.insertId) {
+    throw new Error(
+      "No fue posible registrar la auditoría."
+    );
+  }
+
+  return result;
+}
+/**
+ * Valida si el paciente ya tiene una cita activa
+ * en la misma fecha y hora.
+ *
+ * Estados que bloquean el horario:
+ * - PROGRAMADA
+ * - CONFIRMADA
+ * - EN_ESPERA
+ * - REPROGRAMADA
+ *
+ * Estados que no bloquean:
+ * - ATENDIDA
+ * - CANCELADA
+ * - NO_ASISTIO
+ */
+async function existeCitaPacienteMismoHorario({
+  pacienteId,
+  fecha,
+  hora,
+  excluirCitaId = null,
+}) {
+  const fechaHora =
+    construirFechaHora(fecha, hora);
+
+  if (!pacienteId || !fechaHora) {
+    return false;
+  }
+
+  const params = [
+    pacienteId,
+    fechaHora,
+  ];
+
+  const where = [
+    "c.paciente_id = ?",
+    "c.fecha_hora = ?",
+  ];
+
+  /*
+   * Durante una reprogramación se excluye la cita
+   * que actualmente se está modificando.
+   */
+  if (excluirCitaId) {
+    where.push("c.id <> ?");
+    params.push(excluirCitaId);
+  }
+
+  const [rows] = await db.query(
+    `
+    SELECT
+      COUNT(1) AS total
+
+    FROM citas c
+
+    INNER JOIN estados_cita ec
+      ON ec.id = c.estado_cita_id
+
+    WHERE ${where.join(" AND ")}
+      AND UPPER(TRIM(ec.nombre)) IN (
+        'PROGRAMADA',
+        'CONFIRMADA',
+        'EN_ESPERA',
+        'REPROGRAMADA'
+      )
+    `,
+    params
+  );
+
+  return Number(
+    rows[0]?.total || 0
+  ) > 0;
+}
 export {
   listarCitas,
   listarDisponibilidad,
@@ -1232,6 +1341,7 @@ export {
   validarHorarioMedicoDisponible,
   obtenerHorarioMedicoPorId,
   existeCitaAsignada,
+  existeCitaPacienteMismoHorario,
   existeBloqueoAgenda,
   obtenerEstadoCitaPorCodigo,
   obtenerEstadoCitaPorId,
@@ -1239,5 +1349,5 @@ export {
   obtenerCitaPorId,
   actualizarEstadoCita,
   reprogramarCita,
-  registrarAuditoria,
-};
+  registrarAuditoria
+  };

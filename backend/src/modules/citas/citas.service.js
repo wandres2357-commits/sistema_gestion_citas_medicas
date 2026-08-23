@@ -1,6 +1,7 @@
 // backend/src/modules/citas/citas.service.js
 
 import * as repository from "./citas.repository.js";
+import db from "../../config/db.js";
 
 import {
   validarCrearCita,
@@ -8,17 +9,10 @@ import {
   validarTransicionEstado,
 } from "./citas.validators.js";
 
-/**
- * Convierte un valor a texto limpio.
- */
 function normalizarTexto(value) {
   return String(value || "").trim();
 }
 
-/**
- * Convierte un valor a número.
- * Retorna null cuando el valor no es válido.
- */
 function normalizarNumero(value) {
   if (
     value === null ||
@@ -35,14 +29,6 @@ function normalizarNumero(value) {
     : parsed;
 }
 
-/**
- * Normaliza nombres de estados.
- *
- * Ejemplos:
- * "No asistió"  -> "NO_ASISTIO"
- * "En espera"   -> "EN_ESPERA"
- * "re-programada" -> "RE_PROGRAMADA"
- */
 function normalizarEstado(value) {
   return String(value || "")
     .trim()
@@ -53,27 +39,18 @@ function normalizarEstado(value) {
     .toUpperCase();
 }
 
-/**
- * Valida formato YYYY-MM-DD.
- */
 function validarFechaYYYYMMDD(fecha) {
   return /^\d{4}-\d{2}-\d{2}$/.test(
     String(fecha || "")
   );
 }
 
-/**
- * Valida formato HH:mm o HH:mm:ss.
- */
 function validarHoraHHMM(hora) {
   return /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(
     String(hora || "")
   );
 }
 
-/**
- * Valida parámetros de consulta de disponibilidad.
- */
 function validarConsultaDisponibilidad(query = {}) {
   const errores = [];
 
@@ -103,9 +80,6 @@ function validarConsultaDisponibilidad(query = {}) {
   }
 }
 
-/**
- * Normaliza el filtro de citas.
- */
 function mapearMostrarCitas(mostrar) {
   const value = normalizarTexto(mostrar)
     .normalize("NFD")
@@ -134,9 +108,6 @@ function mapearMostrarCitas(mostrar) {
   return "proximas";
 }
 
-/**
- * Lista citas con filtros.
- */
 async function listarCitas(query = {}) {
   const pacienteId = normalizarNumero(
     query.paciente_id
@@ -151,43 +122,47 @@ async function listarCitas(query = {}) {
     query.mostrar
   );
 
-  return repository.listarCitas({
-    pacienteId,
-    estadoCitaId,
-    mostrar,
-  });
+  const citas =
+    await repository.listarCitas({
+      pacienteId,
+      estadoCitaId,
+      mostrar,
+    });
+
+  return Array.isArray(citas)
+    ? citas
+    : [];
 }
 
-/**
- * Consulta disponibilidad médica.
- */
 async function listarDisponibilidad(query = {}) {
   validarConsultaDisponibilidad(query);
 
-  return repository.listarDisponibilidad({
-    especialidadId: normalizarNumero(
-      query.especialidad_id
-    ),
+  const disponibilidad =
+    await repository.listarDisponibilidad({
+      especialidadId: normalizarNumero(
+        query.especialidad_id
+      ),
 
-    sedeId: normalizarNumero(
-      query.sede_id
-    ),
+      sedeId: normalizarNumero(
+        query.sede_id
+      ),
 
-    medicoId: normalizarNumero(
-      query.medico_id
-    ),
+      medicoId: normalizarNumero(
+        query.medico_id
+      ),
 
-    consultorioId: normalizarNumero(
-      query.consultorio_id
-    ),
+      consultorioId: normalizarNumero(
+        query.consultorio_id
+      ),
 
-    fecha: query.fecha,
-  });
+      fecha: query.fecha,
+    });
+
+  return Array.isArray(disponibilidad)
+    ? disponibilidad
+    : [];
 }
 
-/**
- * Crea una cita médica con estado PROGRAMADA.
- */
 async function crearCita(
   payload = {},
   usuarioId = null
@@ -237,9 +212,6 @@ async function crearCita(
       payload.observaciones
     ) || null;
 
-  /*
-   * Validar paciente.
-   */
   const paciente =
     await repository.obtenerPacientePorId(
       pacienteId
@@ -262,9 +234,6 @@ async function crearCita(
     );
   }
 
-  /*
-   * Obtener estado inicial.
-   */
   const estadoProgramada =
     await repository.obtenerEstadoCitaPorCodigo(
       "PROGRAMADA"
@@ -276,9 +245,6 @@ async function crearCita(
     );
   }
 
-  /*
-   * Validar agenda u horario.
-   */
   const agendaDisponible =
     await repository.validarAgendaDisponible({
       agendaId,
@@ -293,10 +259,6 @@ async function crearCita(
     );
   }
 
-  /*
-   * Validar que el horario seleccionado coincida con
-   * el rango y la vigencia de horarios_medicos.
-   */
   if (horarioMedicoId) {
     const horarioValido =
       await repository.validarHorarioMedicoDisponible({
@@ -312,9 +274,6 @@ async function crearCita(
     }
   }
 
-  /*
-   * Validar cruce contra otras citas.
-   */
   const existeCruce =
     await repository.existeCitaAsignada({
       agendaId,
@@ -330,9 +289,19 @@ async function crearCita(
     );
   }
 
-  /*
-   * Validar bloqueos de agenda.
-   */
+  const existeCrucePaciente =
+    await repository.existeCitaPacienteMismoHorario({
+      pacienteId,
+      fecha: payload.fecha,
+      hora: payload.hora,
+    });
+
+  if (existeCrucePaciente) {
+    throw new Error(
+      "El paciente ya tiene una cita activa en la fecha y hora seleccionadas."
+    );
+  }
+
   const bloqueoAgenda =
     await repository.existeBloqueoAgenda({
       agendaId,
@@ -348,18 +317,6 @@ async function crearCita(
     );
   }
 
-  /*
-   * Crear cita.
-   *
-   * La tabla citas no contiene actualmente:
-   * - consecutivo
-   * - horario_medico_id
-   * - valor_cita
-   * - usuario_creacion_id
-   *
-   * horario_medico_id se usa para resolver los datos
-   * relacionados, pero no se inserta en citas.
-   */
   const citaCreada =
     await repository.crearCita({
       paciente_id: pacienteId,
@@ -376,18 +333,17 @@ async function crearCita(
       observacion,
     });
 
-  /*
-   * Registrar auditoría.
-   */
   await repository.registrarAuditoria({
     tabla: "citas",
     registro_id: citaCreada.id,
     accion: "CREAR_CITA",
     valor_anterior: null,
+
     valor_nuevo: JSON.stringify({
       ...citaCreada,
       estado: estadoProgramada.nombre,
     }),
+
     usuario_id: usuarioId,
   });
 
@@ -395,7 +351,17 @@ async function crearCita(
 }
 
 /**
- * Cambia el estado de una cita.
+ * Cambia el estado de una cita utilizando una
+ * transacción MySQL.
+ *
+ * Operaciones atómicas:
+ * 1. Bloquear y consultar cita.
+ * 2. Validar transición.
+ * 3. Actualizar cita.
+ * 4. Registrar auditoría.
+ * 5. Confirmar transacción.
+ *
+ * Si una operación falla, se ejecuta rollback.
  */
 async function cambiarEstado(params = {}) {
   const citaId = normalizarNumero(
@@ -413,153 +379,156 @@ async function cambiarEstado(params = {}) {
     params.usuario_id
   );
 
-  const motivoCancelacionId =
-    normalizarNumero(
-      params.motivoCancelacionId ||
-      params.motivo_cancelacion_id
-    );
+  const motivoCancelacionId = normalizarNumero(
+    params.motivoCancelacionId ||
+    params.motivo_cancelacion_id
+  );
 
   const observacion =
-    normalizarTexto(params.observacion) ||
-    null;
+    normalizarTexto(
+      params.observacion ||
+      params.observaciones
+    ) || null;
 
   if (!citaId) {
-    throw new Error(
-      "El identificador de la cita es obligatorio."
-    );
+    throw new Error("El identificador de la cita es obligatorio.");
   }
 
   if (!estadoCodigo) {
-    throw new Error(
-      "El nuevo estado de la cita es obligatorio."
-    );
+    throw new Error("El nuevo estado de la cita es obligatorio.");
   }
 
-  /*
-   * Obtener cita.
-   */
-  const citaActual =
-    await repository.obtenerCitaPorId(
-      citaId
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    /**
+     * Se bloquea la fila para evitar dos cambios
+     * simultáneos sobre la misma cita.
+     */
+    const citaActual = await repository.obtenerCitaPorId(
+      citaId,
+      connection,
+      true
     );
 
-  if (!citaActual) {
-    throw new Error(
-      "La cita no existe."
-    );
-  }
+    if (!citaActual) {
+      throw new Error("La cita no existe.");
+    }
 
-  /*
-   * Obtener estado actual.
-   */
-  const estadoActual =
-    await repository.obtenerEstadoCitaPorId(
-      citaActual.estado_cita_id
+    const estadoActual = await repository.obtenerEstadoCitaPorId(
+      citaActual.estado_cita_id,
+      connection
     );
 
-  if (!estadoActual) {
-    throw new Error(
-      "El estado actual de la cita no existe en estados_cita."
-    );
-  }
+    if (!estadoActual) {
+      throw new Error("El estado actual de la cita no existe en estados_cita.");
+    }
 
-  /*
-   * Obtener estado destino.
-   */
-  const nuevoEstado =
-    await repository.obtenerEstadoCitaPorCodigo(
-      estadoCodigo
+    const nuevoEstado = await repository.obtenerEstadoCitaPorCodigo(
+      estadoCodigo,
+      connection
     );
 
-  if (!nuevoEstado) {
-    throw new Error(
-      `No existe el estado de cita ${estadoCodigo}.`
-    );
-  }
+    if (!nuevoEstado) {
+      throw new Error(`No existe el estado de cita ${estadoCodigo}.`);
+    }
 
-  /*
-   * Validar transición.
-   */
-  validarTransicionEstado(
-    estadoActual.codigo,
-    nuevoEstado.codigo
-  );
-
-  /*
-   * Validaciones específicas por estado.
-   */
-  if (
-    nuevoEstado.codigo === "CANCELADA" &&
-    !motivoCancelacionId
-  ) {
-    throw new Error(
-      "Debe seleccionar un motivo de cancelación."
-    );
-  }
-
-  if (
-    nuevoEstado.codigo === "REPROGRAMADA" &&
-    !observacion
-  ) {
-    throw new Error(
-      "Debe registrar una observación para reprogramar la cita."
-    );
-  }
-
-  if (
-    nuevoEstado.codigo === "EN_ESPERA" &&
-    !observacion
-  ) {
-    throw new Error(
-      "Debe registrar una observación para enviar la cita a espera."
-    );
-  }
-
-  /*
-   * Actualizar.
-   */
-  await repository.actualizarEstadoCita({
-    citaId,
-    estadoCitaId: nuevoEstado.id,
-    motivoCancelacionId,
-    observacion,
-    usuarioId,
-  });
-
-  const citaActualizada =
-    await repository.obtenerCitaPorId(
-      citaId
+    validarTransicionEstado(
+      estadoActual.codigo,
+      nuevoEstado.codigo
     );
 
-  /*
-   * Auditoría.
-   */
-  await repository.registrarAuditoria({
-    tabla: "citas",
-    registro_id: citaId,
-    accion: "CAMBIAR_ESTADO_CITA",
+    if (
+      nuevoEstado.codigo === "CANCELADA" &&
+      !motivoCancelacionId
+    ) {
+      throw new Error("Debe seleccionar un motivo de cancelación.");
+    }
 
-    valor_anterior: JSON.stringify({
-      ...citaActual,
-      estado: estadoActual.nombre,
-    }),
+    if (
+      nuevoEstado.codigo === "REPROGRAMADA" &&
+      !observacion
+    ) {
+      throw new Error("Debe registrar una observación para reprogramar la cita.");
+    }
 
-    valor_nuevo: JSON.stringify({
-      ...citaActualizada,
-      estado: nuevoEstado.nombre,
-      motivo_cancelacion_id:
+    if (
+      nuevoEstado.codigo === "EN_ESPERA" &&
+      !observacion
+    ) {
+      throw new Error("Debe registrar una observación para enviar la cita a espera.");
+    }
+
+    /**
+     * La actualización usa la misma conexión.
+     */
+    await repository.actualizarEstadoCita(
+      {
+        citaId,
+        estadoCitaId: nuevoEstado.id,
         motivoCancelacionId,
-    }),
+        observacion,
+        usuarioId,
+      },
+      connection
+    );
 
-    usuario_id: usuarioId,
-  });
+    /**
+     * Se consulta el resultado sin salir de la
+     * transacción.
+     */
+    const citaActualizada = await repository.obtenerCitaPorId(
+      citaId,
+      connection
+    );
 
-  return citaActualizada;
+    /**
+     * La auditoría se inserta usando la misma
+     * conexión transaccional.
+     */
+    await repository.registrarAuditoria(
+      {
+        tabla: "citas",
+        registro_id: citaId,
+        accion: "CAMBIAR_ESTADO_CITA",
+        valor_anterior: JSON.stringify({
+          ...citaActual,
+          estado: estadoActual.nombre,
+        }),
+        valor_nuevo: JSON.stringify({
+          ...citaActualizada,
+          estado: nuevoEstado.nombre,
+          motivo_cancelacion_id: motivoCancelacionId,
+        }),
+        usuario_id: usuarioId,
+      },
+      connection
+    );
+
+    /**
+     * Solo se confirma cuando ambas operaciones
+     * finalizaron correctamente.
+     */
+    await connection.commit();
+
+    return citaActualizada;
+  } catch (error) {
+    try {
+      await connection.rollback();
+    } catch (rollbackError) {
+      console.error(
+        "ERROR ROLLBACK cambiarEstado:",
+        rollbackError
+      );
+    }
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
 
-/**
- * PROGRAMADA -> CONFIRMADA
- */
 async function confirmarCita(
   citaId,
   usuarioId = null
@@ -571,9 +540,6 @@ async function confirmarCita(
   });
 }
 
-/**
- * PROGRAMADA o CONFIRMADA -> CANCELADA
- */
 async function cancelarCita(
   citaId,
   payload = {},
@@ -582,18 +548,18 @@ async function cancelarCita(
   return cambiarEstado({
     citaId,
     estadoCodigo: "CANCELADA",
+
     motivoCancelacionId:
       payload.motivo_cancelacion_id,
+
     observacion:
       payload.observacion ||
       payload.observaciones,
+
     usuarioId,
   });
 }
 
-/**
- * CONFIRMADA -> ATENDIDA
- */
 async function marcarAtendida(
   citaId,
   usuarioId = null
@@ -605,9 +571,6 @@ async function marcarAtendida(
   });
 }
 
-/**
- * CONFIRMADA -> NO_ASISTIO
- */
 async function marcarNoAsistio(
   citaId,
   payload = {},
@@ -616,16 +579,15 @@ async function marcarNoAsistio(
   return cambiarEstado({
     citaId,
     estadoCodigo: "NO_ASISTIO",
+
     observacion:
       payload.observacion ||
       payload.observaciones,
+
     usuarioId,
   });
 }
 
-/**
- * PROGRAMADA o REPROGRAMADA -> EN_ESPERA
- */
 async function marcarEnEspera(
   citaId,
   payload = {},
@@ -634,20 +596,15 @@ async function marcarEnEspera(
   return cambiarEstado({
     citaId,
     estadoCodigo: "EN_ESPERA",
+
     observacion:
       payload.observacion ||
       payload.observaciones,
+
     usuarioId,
   });
 }
 
-/**
- * Marca una cita como REPROGRAMADA.
- *
- * Esta acción cambia únicamente el estado.
- * La asignación de la nueva fecha se realiza mediante
- * reprogramarFechaCita.
- */
 async function marcarReprogramada(
   citaId,
   payload = {},
@@ -656,23 +613,15 @@ async function marcarReprogramada(
   return cambiarEstado({
     citaId,
     estadoCodigo: "REPROGRAMADA",
+
     observacion:
       payload.observacion ||
       payload.observaciones,
+
     usuarioId,
   });
 }
 
-/**
- * Reprograma fecha, hora y recurso de una cita.
- *
- * Flujo:
- * 1. Valida la transición hacia REPROGRAMADA.
- * 2. Valida la nueva fecha y hora.
- * 3. Valida agenda, cruces y bloqueos.
- * 4. Actualiza datos de la cita.
- * 5. Registra auditoría.
- */
 async function reprogramarFechaCita(
   citaId,
   payload = {},
@@ -848,6 +797,20 @@ async function reprogramarFechaCita(
   if (existeCruce) {
     throw new Error(
       "Ya existe una cita asignada para el recurso en la nueva fecha y hora."
+    );
+  }
+
+  const existeCrucePaciente =
+    await repository.existeCitaPacienteMismoHorario({
+      pacienteId: citaActual.paciente_id,
+      fecha,
+      hora,
+      excluirCitaId: id,
+    });
+
+  if (existeCrucePaciente) {
+    throw new Error(
+      "El paciente ya tiene otra cita activa en la nueva fecha y hora."
     );
   }
 

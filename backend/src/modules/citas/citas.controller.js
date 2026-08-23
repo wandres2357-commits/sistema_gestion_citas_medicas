@@ -16,14 +16,22 @@ function obtenerUsuarioId(req) {
  */
 export async function listarCitas(req, res) {
   try {
-    const data = await service.listarCitas(req.query);
+    const data =
+      await service.listarCitas(
+        req.query
+      );
 
     return res.status(200).json({
       ok: true,
-      data,
+      data: Array.isArray(data)
+        ? data
+        : [],
     });
   } catch (error) {
-    console.error("ERROR listarCitas:", error);
+    console.error(
+      "ERROR listarCitas:",
+      error
+    );
 
     return res.status(500).json({
       ok: false,
